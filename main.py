@@ -16,11 +16,11 @@ groq_client = Groq(api_key=GROQ_API_KEY)
 
 # ========== ИСТОЧНИКИ ==========
 SITE_FEEDS = [
-    'https://www.jaad.org/rss',
-    'https://onlinelibrary.wiley.com/feed/14732165',
-    'https://www.dermatologytimes.com/rss',
+    'https://www.sciencedaily.com/rss/health_medicine/skin_care.xml',
+    'https://medicalxpress.com/rss-feed/dermatology.xml',
+    'https://www.medscape.com/cx/rssfeeds/10026.xml',
+    'https://www.healio.com/rss/dermatology',
     'https://anndermatol.org/rss.php',
-    'https://www.thelancet.com/action/showFeed?type=collection&collectionId=dermatology',
 ]
 
 TG_FEEDS = [
@@ -47,6 +47,8 @@ def load_memory():
                 return {'posted_links': data, 'posted_titles': [], 'site_index': 0, 'tg_index': 0, 'last_source': 'tg'}
             if 'posted_titles' not in data: data['posted_titles'] = []
             if 'last_source' not in data: data['last_source'] = 'tg'
+            if 'site_index' not in data: data['site_index'] = 0
+            if 'tg_index' not in data: data['tg_index'] = 0
             return data
     return {'posted_links': [], 'posted_titles': [], 'site_index': 0, 'tg_index': 0, 'last_source': 'tg'}
 
@@ -68,13 +70,11 @@ def clean_html(text):
 
 def get_news_from_rss(feed_url, max_items=2):
     try:
-        # 🛡️ Маскируемся под обычный браузер, чтобы сайты не блокировали запросы от GitHub
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'application/rss+xml, application/xml, text/xml, */*'
         }
         feed = feedparser.parse(feed_url, request_headers=headers)
-        
         source_title = feed.feed.get('title', 'Unknown')
         status = getattr(feed, 'status', 'N/A')
         print(f"🔍 {source_title} (Status: {status}): найдено {len(feed.entries)} записей")
@@ -84,7 +84,6 @@ def get_news_from_rss(feed_url, max_items=2):
             raw = entry.get('summary', entry.get('description', ''))
             summary = clean_html(raw)
             summary = (summary[:600] + '...') if len(summary) > 600 else summary
-
             news_list.append({
                 'title': clean_html(entry.title),
                 'summary': summary,
@@ -97,23 +96,30 @@ def get_news_from_rss(feed_url, max_items=2):
         print(f"⚠️ Ошибка чтения {feed_url}: {e}")
         return []
 
-def get_news_round_robin(feeds, start_index):
-    num = len(feeds)
-    if num == 0: return [], 0
+def get_all_news_from_category(feeds, start_index):
+    """Собираем новости со ВСЕХ источников в категории, начиная с start_index"""
+    num_feeds = len(feeds)
+    if num_feeds == 0:
+        return [], 0
+    
     all_news = []
-    for i in range(num):
-        idx = (start_index + i) % num
-        all_news.extend(get_news_from_rss(feeds[idx], max_items=2))
+    # Проходим по всем источникам, начиная с start_index
+    for i in range(num_feeds):
+        idx = (start_index + i) % num_feeds
+        print(f"📡 Проверяем источник #{idx+1}: {feeds[idx]}")
+        news = get_news_from_rss(feeds[idx], max_items=2)
+        all_news.extend(news)
         time.sleep(0.5)
-    return all_news, (start_index + 1) % num
+    
+    # Возвращаем следующий индекс (сдвигаем на 1)
+    next_index = (start_index + 1) % num_feeds
+    return all_news, next_index
 
 # ========== ФИЛЬТРЫ ==========
 def is_from_telegram(feed_url):
     return 'tg.i-c-a.su' in feed_url or 'rsshub.app/telegram' in feed_url
 
 def is_relevant(news_item):
-    if 'thelancet.com' not in news_item.get('feed_url', ''):
-        return True
     text = (news_item['title'] + ' ' + news_item['summary']).lower()
     return any(kw in text for kw in RELEVANT_KEYWORDS)
 
@@ -126,7 +132,7 @@ def process_site_news(news_item):
 
 ЗАДАЧА:
 1. Переведи заголовок на русский. Сделай его цепляющим, но профессиональным. Оберни в тег <b>жирный</b>.
-2. Напиши саммари в 2-3 предложениях. Живой язык, без канцеляризмов. Добавь 1-2 эмодзи (🔬 💉 🧬 🌿).
+2. Напиши саммари в 2-3 предложениях. Живой язык, без канцеляризмов. Добавь 1-2 эмодзи (🔬  🧬 🌿).
 3. В конце добавь: 🔗 <a href="{news_item['link']}">Читать в источнике</a>
 4. Добавь 2-3 хэштега (#косметология #медицина #исследования и т.д.).
 
@@ -210,71 +216,106 @@ def main():
     last_source = memory.get('last_source', 'tg')
 
     print(f"🧠 В памяти: {len(posted_links)} ссылок, {len(posted_titles)} заголовков")
-    print(f"📂 Последний источник: {last_source.upper()}\n")
+    print(f"📂 Последний источник: {last_source.upper()}")
+    print(f"📊 Индексы: сайты={site_index}, телеграм={tg_index}\n")
 
+    # Определяем текущую категорию (противоположную последней)
     if last_source == 'site':
-        feeds, start_index = TG_FEEDS, tg_index
         current_source = 'tg'
-        print(f"📱 Берем из: Telegram-каналы ({len(feeds)} источников)")
+        feeds = TG_FEEDS
+        start_index = tg_index
     else:
-        feeds, start_index = SITE_FEEDS, site_index
         current_source = 'site'
-        print(f"📰 Берем из: Сайты ({len(feeds)} источников)")
+        feeds = SITE_FEEDS
+        start_index = site_index
 
-    raw_news, next_index = get_news_round_robin(feeds, start_index)
+    print(f"📰 Текущая категория: {current_source.upper()}")
+    print(f"📡 Проверяем все {len(feeds)} источников...\n")
 
+    # Собираем новости со ВСЕХ источников в категории
+    raw_news, next_index = get_all_news_from_category(feeds, start_index)
+
+    print(f"\n📊 Всего собрано: {len(raw_news)} новостей")
+
+    # Фильтруем дубликаты и нерелевантные
     unique_news = []
     for item in raw_news:
-        if item['link'] in posted_links: continue
+        if item['link'] in posted_links:
+            continue
         normalized = normalize_title(item['title'])
-        if normalized in posted_titles: continue
-        if not is_relevant(item): continue
+        if normalized in posted_titles:
+            continue
+        if not is_relevant(item):
+            continue
         unique_news.append(item)
 
-    print(f"\n📊 Всего найдено: {len(raw_news)} → новых и по теме: {len(unique_news)}\n")
+    print(f"✅ После фильтрации: {len(unique_news)} подходящих новостей\n")
 
     if not unique_news:
-        print(f"🔄 Новых новостей в {current_source.upper()} нет. Пропускаем этот час.")
-        if current_source == 'site': memory['site_index'] = next_index
-        else: memory['tg_index'] = next_index
+        print(f"❌ В категории {current_source.upper()} нет новых новостей.")
+        print(f"💾 Сохраняем индекс {next_index} для следующего запуска.")
+        # Обновляем индекс, но не меняем last_source
+        if current_source == 'site':
+            memory['site_index'] = next_index
+        else:
+            memory['tg_index'] = next_index
         save_memory(memory)
         return
 
+    # Берем ПЕРВУЮ подходящую новость
     news_item = unique_news[0]
-    print(f"📝 Обрабатываем: {news_item['title'][:50]}...")
+    print(f" Выбираем: {news_item['title'][:60]}...")
+    print(f"📡 Источник: {news_item['source']}\n")
 
+    # Обрабатываем через Groq
     if is_from_telegram(news_item['feed_url']):
-        print("   → Промпт: TELEGRAM (рерайт + антиреклама)")
+        print("→ Промпт: TELEGRAM (рерайт + антиреклама)")
         post_text = process_tg_news(news_item)
     else:
-        print("   → Промпт: САЙТ (перевод + саммари)")
+        print("→ Промпт: САЙТ (перевод + саммари)")
         post_text = process_site_news(news_item)
 
     if not post_text:
+        print("⏭ Пропущено (реклама или ошибка Groq).")
+        # Помечаем как обработанную
         posted_links.append(news_item['link'])
         posted_titles.append(normalize_title(news_item['title']))
         memory['posted_links'] = posted_links[-1000:]
         memory['posted_titles'] = posted_titles[-1000:]
-        if current_source == 'site': memory['site_index'] = next_index
-        else: memory['tg_index'] = next_index
+        if current_source == 'site':
+            memory['site_index'] = next_index
+        else:
+            memory['tg_index'] = next_index
         save_memory(memory)
-        print("⏭ Пропущено (реклама или ошибка).")
         return
 
     print("\n--- ГОТОВЫЙ ПОСТ ---")
     print(post_text)
     print("--------------------\n")
 
+    # Публикуем
     if post_to_telegram(post_text):
+        print(f"🎉 Успешно опубликовано!")
+        
+        # Обновляем память
         posted_links.append(news_item['link'])
         posted_titles.append(normalize_title(news_item['title']))
         memory['posted_links'] = posted_links[-1000:]
         memory['posted_titles'] = posted_titles[-1000:]
-        if current_source == 'site': memory['site_index'] = next_index
-        else: memory['tg_index'] = next_index
+        
+        # Обновляем индекс для этой категории
+        if current_source == 'site':
+            memory['site_index'] = next_index
+        else:
+            memory['tg_index'] = next_index
+        
+        # Меняем категорию для следующего запуска
         memory['last_source'] = current_source
+        
         save_memory(memory)
-        print(f"🎉 Готово! Следующий пост будет из: {'TELEGRAM' if current_source == 'site' else 'САЙТОВ'}")
+        print(f"💾 Память сохранена.")
+        print(f"🔄 Следующий запуск будет из категории: {'TELEGRAM' if current_source == 'site' else 'САЙТОВ'}")
+        print(f"📊 Индексы: сайты={memory['site_index']}, телеграм={memory['tg_index']}")
     else:
         print("❌ Не удалось опубликовать.")
 
