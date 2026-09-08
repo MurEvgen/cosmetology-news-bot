@@ -53,17 +53,19 @@ def load_memory():
                     'posted_links': data,
                     'posted_titles': [],
                     'site_index': 0, 'tg_index': 0,
-                    'source_type': 'site'
+                    'last_source': 'tg'  # Начинаем с сайтов
                 }
             # Если файл новой структуры, но без поля posted_titles
             if 'posted_titles' not in data:
                 data['posted_titles'] = []
+            if 'last_source' not in data:
+                data['last_source'] = 'tg'
             return data
     return {
         'posted_links': [],
         'posted_titles': [],
         'site_index': 0, 'tg_index': 0,
-        'source_type': 'site'
+        'last_source': 'tg'  # Начинаем с сайтов
     }
 
 def save_memory(memory):
@@ -104,7 +106,7 @@ def get_news_from_rss(feed_url, max_items=2):
             })
         return news_list
     except Exception as e:
-        print(f"⚠️ Ошибка чтения {feed_url}: {e}")
+        print(f"️ Ошибка чтения {feed_url}: {e}")
         return []
 
 def get_news_round_robin(feeds, start_index):
@@ -142,7 +144,7 @@ def process_site_news(news_item):
 
 ЗАДАЧА:
 1. Переведи заголовок на русский. Сделай его цепляющим, но профессиональным. Оберни в тег <b>жирный</b>.
-2. Напиши саммари в 2-3 предложениях. Живой язык, без канцеляризмов. Добавь 1-2 эмодзи (🔬 💉 🧬 ).
+2. Напиши саммари в 2-3 предложениях. Живой язык, без канцеляризмов. Добавь 1-2 эмодзи (🔬  🧬 🌿).
 3. В конце добавь: 🔗 <a href="{news_item['link']}">Читать в источнике</a>
 4. Добавь 2-3 хэштега (#косметология #медицина #исследования и т.д.).
 
@@ -150,7 +152,7 @@ def process_site_news(news_item):
 
     try:
         resp = groq_client.chat.completions.create(
-            model="qwen-2.5-32b",
+            model="qwen/qwen3.8-27b",
             messages=[
                 {"role": "system", "content": "Ты медицинский редактор. Строго следуй формату HTML."},
                 {"role": "user", "content": prompt}
@@ -201,7 +203,7 @@ def process_tg_news(news_item):
 
     try:
         resp = groq_client.chat.completions.create(
-            model="qwen-2.5-32b",
+            model="qwen/qwen3.8-27b",
             messages=[
                 {"role": "system", "content": "Ты редактор. Отвечай ТОЛЬКО текстом поста или словом SKIP."},
                 {"role": "user", "content": prompt}
@@ -235,9 +237,9 @@ def post_to_telegram(text):
         if result.get('ok'):
             print(f"✅ Опубликовано в {CHANNEL_ID}!")
             return True
-        print(f"⚠️ Telegram вернул: {result}")
+        print(f"️ Telegram вернул: {result}")
     except Exception as e:
-        print(f"⚠️ Ошибка Telegram: {e}")
+        print(f"️ Ошибка Telegram: {e}")
     return False
 
 # ========== ГЛАВНЫЙ ЦИКЛ ==========
@@ -249,24 +251,26 @@ def main():
     posted_titles = memory.get('posted_titles', [])
     site_index = memory.get('site_index', 0)
     tg_index = memory.get('tg_index', 0)
-    source_type = memory.get('source_type', 'site')
+    last_source = memory.get('last_source', 'tg')
 
-    print(f"🧠 В памяти: {len(posted_links)} ссылок, {len(posted_titles)} заголовков")
-    print(f"📂 Текущий пул: {source_type.upper()}\n")
+    print(f" В памяти: {len(posted_links)} ссылок, {len(posted_titles)} заголовков")
+    print(f"📂 Последний источник: {last_source.upper()}\n")
 
-    # Выбираем пул источников
-    if source_type == 'site':
-        feeds = SITE_FEEDS
-        start_index = site_index
-        print(f" Сайты: {len(feeds)} источников")
-    else:
+    # СТРОГОЕ ЧЕРЕДОВАНИЕ: если последний был сайт, теперь берем из TG, и наоборот
+    if last_source == 'site':
         feeds = TG_FEEDS
         start_index = tg_index
-        print(f" Telegram-каналы: {len(feeds)} источников")
+        current_source = 'tg'
+        print(f"📱 Берем из: Telegram-каналы ({len(feeds)} источников)")
+    else:
+        feeds = SITE_FEEDS
+        start_index = site_index
+        current_source = 'site'
+        print(f"📰 Берем из: Сайты ({len(feeds)} источников)")
 
     raw_news, next_index = get_news_round_robin(feeds, start_index)
 
-    # 🔒 ТРОЙНАЯ ЗАЩИТА ОТ ПОВТОРОВ:
+    # ТРОЙНАЯ ЗАЩИТА ОТ ПОВТОРОВ:
     # 1. По ссылке (URL)
     # 2. По нормализованному заголовку
     # 3. По релевантности теме
@@ -281,16 +285,20 @@ def main():
             continue
         unique_news.append(item)
 
-    print(f"📊 Найдено {len(raw_news)} → новых и по теме: {len(unique_news)}\n")
+    print(f" Найдено {len(raw_news)} → новых и по теме: {len(unique_news)}\n")
 
     if not unique_news:
-        print("🔄 Новых новостей нет. Переключаю пул.")
-        memory['source_type'] = 'tg' if source_type == 'site' else 'site'
+        print(f"🔄 Новых новостей в {current_source.upper()} нет. Пропускаем этот час.")
+        # Сохраняем индекс, но не меняем last_source
+        if current_source == 'site':
+            memory['site_index'] = next_index
+        else:
+            memory['tg_index'] = next_index
         save_memory(memory)
         return
 
     news_item = unique_news[0]
-    print(f"📝 Обрабатываем: {news_item['title'][:50]}...")
+    print(f" Обрабатываем: {news_item['title'][:50]}...")
 
     # Выбираем промпт в зависимости от источника
     if is_from_telegram(news_item['feed_url']):
@@ -307,13 +315,13 @@ def main():
         posted_titles.append(normalize_title(news_item['title']))
         memory['posted_links'] = posted_links[-1000:]
         memory['posted_titles'] = posted_titles[-1000:]
-        if source_type == 'site':
+        if current_source == 'site':
             memory['site_index'] = next_index
         else:
             memory['tg_index'] = next_index
-        memory['source_type'] = 'tg' if source_type == 'site' else 'site'
+        # Не меняем last_source, так как пост не опубликован
         save_memory(memory)
-        print("⏭ Пропущено. Переходим к следующей новости.")
+        print("⏭ Пропущено (реклама или ошибка).")
         return
 
     print("\n--- ГОТОВЫЙ ПОСТ ---")
@@ -324,19 +332,19 @@ def main():
         posted_links.append(news_item['link'])
         posted_titles.append(normalize_title(news_item['title']))
         
-        # Храним последние 1000 записей (вместо 200)
+        # Храним последние 1000 записей
         memory['posted_links'] = posted_links[-1000:]
         memory['posted_titles'] = posted_titles[-1000:]
 
-        if source_type == 'site':
+        if current_source == 'site':
             memory['site_index'] = next_index
         else:
             memory['tg_index'] = next_index
 
-        # Чередуем пулы для разнообразия
-        memory['source_type'] = 'tg' if source_type == 'site' else 'site'
+        # Обновляем last_source для строгого чередования
+        memory['last_source'] = current_source
         save_memory(memory)
-        print(f"🎉 Готово! Следующий пул: {memory['source_type'].upper()}")
+        print(f"🎉 Готово! Следующий пост будет из: {'TELEGRAM' if current_source == 'site' else 'САЙТОВ'}")
     else:
         print("❌ Не удалось опубликовать.")
 
