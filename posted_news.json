@@ -1,7 +1,11 @@
 {
-  "posted_links": [],
-  "posted_titles": [],
-  "site_index": 4,
+  "posted_links": [
+    "https://www.sciencedaily.com/releases/2026/08/260814235852.htm"
+  ],
+  "posted_titles": [
+    "the common mistake that could make aging joints hurt more"
+  ],
+  "site_index": 0,
   "tg_index": 0,
-  "last_source": "tg"
+  "last_source": "site"
 }
