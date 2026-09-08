@@ -14,18 +14,16 @@ CHANNEL_ID = "@derma_cosmo_facts"
 MEMORY_FILE = "posted_news.json"
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-# ========== ИСТОЧНИКИ (только гарантированно рабочие RSS) ==========
+# ========== ИСТОЧНИКИ ==========
 SITE_FEEDS = [
-    # Международные журналы (отдают корректный XML)
-    'https://www.jaad.org/rss',                                              # JAAD (USA)
-    'https://onlinelibrary.wiley.com/feed/14732165',                         # Journal of Cosmetic Dermatology
-    'https://www.dermatologytimes.com/rss',                                  # Dermatology Times
-    'https://anndermatol.org/rss.php',                                       # Annals of Dermatology (Korea)
-    'https://www.thelancet.com/action/showFeed?type=collection&collectionId=dermatology', # The Lancet Dermatology
+    'https://www.jaad.org/rss',
+    'https://onlinelibrary.wiley.com/feed/14732165',
+    'https://www.dermatologytimes.com/rss',
+    'https://anndermatol.org/rss.php',
+    'https://www.thelancet.com/action/showFeed?type=collection&collectionId=dermatology',
 ]
 
 TG_FEEDS = [
-    # Telegram-каналы через RSS-мост
     'https://tg.i-c-a.su/rss/chatkosmetologa',
     'https://tg.i-c-a.su/rss/d_dermatology',
     'https://tg.i-c-a.su/rss/cosmetologich',
@@ -70,9 +68,16 @@ def clean_html(text):
 
 def get_news_from_rss(feed_url, max_items=2):
     try:
-        feed = feedparser.parse(feed_url)
-        # 🔍 Отладка: видим, сколько записей вернул источник
-        print(f"🔍 {feed.feed.get('title', 'Unknown')}: найдено {len(feed.entries)} записей")
+        # 🛡️ Маскируемся под обычный браузер, чтобы сайты не блокировали запросы от GitHub
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/rss+xml, application/xml, text/xml, */*'
+        }
+        feed = feedparser.parse(feed_url, request_headers=headers)
+        
+        source_title = feed.feed.get('title', 'Unknown')
+        status = getattr(feed, 'status', 'N/A')
+        print(f"🔍 {source_title} (Status: {status}): найдено {len(feed.entries)} записей")
         
         news_list = []
         for entry in feed.entries[:max_items]:
@@ -84,7 +89,7 @@ def get_news_from_rss(feed_url, max_items=2):
                 'title': clean_html(entry.title),
                 'summary': summary,
                 'link': entry.link,
-                'source': feed.feed.get('title', 'Неизвестный источник'),
+                'source': source_title,
                 'feed_url': feed_url,
             })
         return news_list
