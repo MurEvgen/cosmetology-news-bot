@@ -16,14 +16,21 @@ groq_client = Groq(api_key=GROQ_API_KEY)
 
 # ========== ИСТОЧНИКИ ==========
 SITE_FEEDS = [
+    # 🌍 Западные
     'https://www.sciencedaily.com/rss/health_medicine/skin_care.xml',
     'https://www.healio.com/rss/dermatology',
+    # 🇰🇷 Корея
     'https://www.bosa.co.kr/rss/allArticle.xml',
     'https://m.koreaherald.com/rss/newsAll',
     'https://en.yna.co.kr/RSS/news.xml',
+    # 🇨🇳 Китай
     'http://www.chinadaily.com.cn/rss/lifestyle_rss.xml',
     'https://www.scmp.com/rss/2/feed',
     'https://weekly.chinacdc.cn/rss/current.xml',
+    # 🇷🇺 Россия (добавлены 09.09.2026)
+    'https://nplus1.ru/rss',
+    'https://elementy.ru/rss/news',
+    'https://scientificrussia.ru/rss',
 ]
 
 TG_FEEDS = [
@@ -40,6 +47,8 @@ RELEVANT_KEYWORDS = [
     'botox', 'botulinum', 'filler', 'rejuvenation', 'aging',
     'sunscreen', 'moisturizer', 'skincare', 'beauty',
     'кожа', 'косметолог', 'дерматолог', 'эстетическ', 'акне',
+    'псориаз', 'морщины', 'коллаген', 'ботокс', 'филлер',
+    'пилинг', 'лазер', 'омоложение', 'дерматит', 'розацеа',
     '피부', '화장품', '뷰티', '미용', '성형', '피부과',
     '보톡스', '필러', '레이저', '콜라겐', '엑소좀', '여드름',
     '아토피', '탈모', '주름', '색소', '자외선',
@@ -71,12 +80,10 @@ def normalize_title(title):
     title = re.sub(r'\s+', ' ', title)
     return title
 
-# ========== 🛡️ ОЧИСТКА ОТ ИЕРОГЛИФОВ (СОХРАНЯЕМ ПЕРЕНОСЫ СТРОК!) ==========
+# ========== 🛡️ ОЧИСТКА ==========
 def clean_post_text(text):
     if not text:
         return text
-
-    # Удаляем CJK-иероглифы (китайские, корейские, японские)
     cjk_pattern = re.compile(
         "["
         "\u2E80-\u2EFF\u2F00-\u2FDF\u3040-\u309F\u30A0-\u30FF"
@@ -85,29 +92,17 @@ def clean_post_text(text):
         "]+", re.UNICODE
     )
     text = cjk_pattern.sub('', text)
-
-    # Нормализуем переносы строк, но НЕ удаляем их!
     text = text.replace('\r\n', '\n').replace('\r', '\n')
-    text = re.sub(r'\n{3,}', '\n\n', text)          # 3+ переносов → 2
-    text = re.sub(r'[ \t]{2,}', ' ', text)          # лишние пробелы в строках
-    text = re.sub(r' +([.,!?;:])', r'\1', text)     # пробел перед знаком
-    text = re.sub(r'<b>\s*</b>', '', text)          # пустые теги
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    text = re.sub(r'[ \t]{2,}', ' ', text)
+    text = re.sub(r' +([.,!?;:])', r'\1', text)
+    text = re.sub(r'<b>\s*</b>', '', text)
     return text.strip()
 
-# ========== 🎨 ФОРМАТИРОВАНИЕ СТРУКТУРЫ ПОСТА ==========
+# ========== 🎨 ФОРМАТИРОВАНИЕ СТРУКТУРЫ ==========
 def format_post(text):
-    """
-    Принудительно собирает пост по структуре:
-    <b>Заголовок</b>
-    <пустая строка>
-    Основной текст
-    <пустая строка>
-    #хэштеги
-    """
     if not text:
         return text
-
-    # 1. Извлекаем хэштеги и убираем их из текста
     hashtags = re.findall(r'#[A-Za-zА-Яа-яЁё0-9_]+', text)
     seen = set()
     unique_tags = []
@@ -116,24 +111,15 @@ def format_post(text):
             seen.add(t)
             unique_tags.append(t)
     text_no_tags = re.sub(r'#[A-Za-zА-Яа-яЁё0-9_]+', '', text)
-
-    # 2. Разбиваем на строки и чистим пустые
     lines = [ln.strip() for ln in text_no_tags.split('\n')]
     lines = [re.sub(r'\s{2,}', ' ', ln) for ln in lines if ln.strip()]
-
     if not lines:
         return ' '.join(unique_tags)
-
-    # 3. Заголовок = первая строка (оборачиваем в <b>, если нужно)
     title = lines[0]
     title = re.sub(r'^<b>\s*', '', title)
     title = re.sub(r'\s*</b>$', '', title)
     title = f'<b>{title.strip()}</b>'
-
-    # 4. Тело = остальные строки, разделённые пустой строкой
     body = '\n\n'.join(lines[1:]).strip()
-
-    # 5. Собираем итог
     parts = [title]
     if body:
         parts.append(body)
@@ -212,7 +198,7 @@ def process_site_news(news_item):
 - Все названия городов и термины переводи на русский (Seoul → Сеул, Beijing → Пекин).
 - В финальном тексте НЕ ДОЛЖНО БЫТЬ ни одного иероглифа.
 
-️ ФОРМАТ ВЫВОДА (СТРОГО, с переносами строк):
+⚠️ ФОРМАТ ВЫВОДА (СТРОГО, с переносами строк):
 <b>Заголовок</b>
 <ПУСТАЯ СТРОКА>
 Основной текст поста (4-8 предложений).
@@ -229,7 +215,7 @@ def process_site_news(news_item):
 
 ПРАВИЛА:
 - Живой язык, без канцеляризмов
-- 1-2 тематических эмодзи (🔬  🧬 🌿 📊)
+- 1-2 тематических эмодзи (🔬 💉 🧬 🌿 📊)
 - Научная точность, не выдумывай факты
 
 ОТВЕТЬ ТОЛЬКО готовым постом в указанном формате. Без комментариев."""
@@ -278,7 +264,7 @@ def process_tg_news(news_item):
 
 ПРАВИЛА:
 - Живой язык, без канцеляризмов
-- 1-2 тематических эмодзи (🔬 💉  🌿 📊)
+- 1-2 тематических эмодзи (🔬 💉 🧬 🌿 📊)
 - НЕ копируй дословно, переписывай своими словами
 - НЕ упоминай источник, НЕ добавляй ссылки
 
@@ -409,7 +395,6 @@ def main():
         save_memory(memory)
         return
 
-    # 🛡️ Очистка от иероглифов + принудительное форматирование структуры
     post_text = format_post(clean_post_text(post_text))
 
     print("\n--- ГОТОВЫЙ ПОСТ (после очистки и форматирования) ---")
