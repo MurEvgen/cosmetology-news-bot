@@ -16,24 +16,24 @@ CONTACT_EMAIL = "cosmetology-bot@example.com"
 MEMORY_FILE = "posted_news.json"
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-# ========== ИСТОЧНИКИ (16 сайтов + 4 TG) ==========
+# ========== КАТЕГОРИИ ИСТОЧНИКОВ ==========
+# Категория 1: САЙТЫ (RSS)
 SITE_FEEDS = [
-    # 🌍 Западные
     'https://www.sciencedaily.com/rss/health_medicine/skin_care.xml',
     'https://www.healio.com/rss/dermatology',
-    # 🇰🇷 Корея
     'https://www.bosa.co.kr/rss/allArticle.xml',
     'https://m.koreaherald.com/rss/newsAll',
     'https://en.yna.co.kr/RSS/news.xml',
-    # 🇨🇳 Китай
     'http://www.chinadaily.com.cn/rss/lifestyle_rss.xml',
     'https://www.scmp.com/rss/2/feed',
     'https://weekly.chinacdc.cn/rss/current.xml',
-    # 🇷🇺 Россия
     'https://nplus1.ru/rss',
     'https://elementy.ru/rss/news',
     'https://scientificrussia.ru/rss',
-    # 🔬 Научные API (псевдо-источники)
+]
+
+# Категория 2: НАУКА (научные API)
+SCIENCE_FEEDS = [
     'crossref:0140-6736:skin OR dermatology OR cosmetic OR aesthetic OR acne OR psoriasis',
     'pubmed:dermatology OR cosmetic OR aesthetic OR skin OR botulinum OR filler',
     'semanticscholar:dermatology cosmetic skin aesthetic',
@@ -41,12 +41,15 @@ SITE_FEEDS = [
     'europepmc:dermatology OR cosmetic OR aesthetic OR skin',
 ]
 
+# Категория 3: TELEGRAM
 TG_FEEDS = [
     'https://tg.i-c-a.su/rss/chatkosmetologa',
     'https://tg.i-c-a.su/rss/d_dermatology',
     'https://tg.i-c-a.su/rss/cosmetologich',
     'https://tg.i-c-a.su/rss/cosmetologiainside',
 ]
+
+CATEGORIES = ['site', 'science', 'tg']
 
 RELEVANT_KEYWORDS = [
     'skin', 'dermatology', 'cosmetic', 'aesthetic', 'acne',
@@ -67,17 +70,26 @@ RELEVANT_KEYWORDS = [
 
 # ========== ПАМЯТЬ ==========
 def load_memory():
+    default = {
+        'posted_links': [], 'posted_titles': [],
+        'site_index': 0, 'science_index': 0, 'tg_index': 0,
+        'next_category': 'site',
+    }
     if os.path.exists(MEMORY_FILE):
-        with open(MEMORY_FILE, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            if isinstance(data, list):
-                return {'posted_links': data, 'posted_titles': [], 'site_index': 0, 'tg_index': 0, 'last_source': 'tg'}
-            if 'posted_titles' not in data: data['posted_titles'] = []
-            if 'last_source' not in data: data['last_source'] = 'tg'
-            if 'site_index' not in data: data['site_index'] = 0
-            if 'tg_index' not in data: data['tg_index'] = 0
+        try:
+            with open(MEMORY_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            if isinstance(data, list):  # старый формат
+                data = {'posted_links': data}
+            for k, v in default.items():
+                if k not in data:
+                    data[k] = v
+            if data['next_category'] not in CATEGORIES:
+                data['next_category'] = 'site'
             return data
-    return {'posted_links': [], 'posted_titles': [], 'site_index': 0, 'tg_index': 0, 'last_source': 'tg'}
+        except Exception:
+            return default
+    return default
 
 def save_memory(memory):
     with open(MEMORY_FILE, 'w', encoding='utf-8') as f:
@@ -151,7 +163,7 @@ def get_news_from_rss(feed_url, max_items=10):
         feed = feedparser.parse(feed_url, request_headers=headers)
         source_title = feed.feed.get('title', 'Unknown')
         status = getattr(feed, 'status', 'N/A')
-        print(f"🔍 {source_title} (Status: {status}): найдено {len(feed.entries)} записей")
+        print(f"   🔍 {source_title} (Status: {status}): записей {len(feed.entries)}")
 
         news_list = []
         for entry in feed.entries[:max_items]:
@@ -167,19 +179,17 @@ def get_news_from_rss(feed_url, max_items=10):
             })
         return news_list
     except Exception as e:
-        print(f"⚠️ Ошибка чтения {feed_url}: {e}")
+        print(f"   ⚠️ Ошибка чтения {feed_url}: {e}")
         return []
 
 # ========== 🔬 НАУЧНЫЕ API ==========
 def fetch_abstract_from_openalex(doi):
-    """Добирает аннотацию из OpenAlex по DOI."""
     try:
         url = f"https://api.openalex.org/works/doi:{doi}"
         resp = requests.get(url, params={"mailto": CONTACT_EMAIL}, timeout=10)
         if resp.status_code != 200:
             return ""
-        data = resp.json()
-        inv = data.get("abstract_inverted_index")
+        inv = resp.json().get("abstract_inverted_index")
         if not inv:
             return ""
         positions = []
@@ -192,7 +202,6 @@ def fetch_abstract_from_openalex(doi):
         return ""
 
 def get_news_from_crossref(issn, query, max_items=6):
-    """Crossref API — свежие статьи журнала по ISSN."""
     try:
         url = "https://api.crossref.org/works"
         params = {
@@ -204,15 +213,13 @@ def get_news_from_crossref(issn, query, max_items=6):
             "mailto": CONTACT_EMAIL,
         }
         headers = {"User-Agent": f"CosmetologyNewsBot/1.0 (mailto:{CONTACT_EMAIL})"}
-
         resp = requests.get(url, params=params, headers=headers, timeout=20)
         if resp.status_code != 200:
-            print(f"⚠️ Crossref вернул статус {resp.status_code}")
+            print(f"   ⚠️ Crossref статус {resp.status_code}")
             return []
-
         items = resp.json().get("message", {}).get("items", [])
         source_name = "The Lancet" if issn == "0140-6736" else f"Journal {issn}"
-        print(f"🔍 {source_name} (Crossref): найдено {len(items)} записей")
+        print(f"   🔍 {source_name} (Crossref): записей {len(items)}")
 
         news_list = []
         for n, item in enumerate(items):
@@ -221,14 +228,12 @@ def get_news_from_crossref(issn, query, max_items=6):
                 continue
             doi = item.get("DOI", "")
             link = f"https://doi.org/{doi}"
-
             authors = []
             for a in item.get("author", [])[:3]:
                 name = f"{a.get('given', '')} {a.get('family', '')}".strip()
                 if name:
                     authors.append(name)
             authors_str = ", ".join(authors) if authors else "не указаны"
-
             date_parts = item.get("published", {}).get("date-parts", [[None]])[0]
             year = date_parts[0] if date_parts and date_parts[0] else "б. г."
 
@@ -241,285 +246,199 @@ def get_news_from_crossref(issn, query, max_items=6):
                 summary = (abstract[:1500] + '...') if len(abstract) > 1500 else abstract
             else:
                 summary = f"Научная статья в журнале {source_name}. Тема: {title}. Авторы: {authors_str}. Год: {year}."
-
             summary += f" | Авторы: {authors_str}. Источник: {source_name}, {year}."
 
             news_list.append({
-                'title': title,
-                'summary': summary,
-                'link': link,
-                'source': source_name,
-                'feed_url': f"crossref:{issn}",
+                'title': title, 'summary': summary, 'link': link,
+                'source': source_name, 'feed_url': f"crossref:{issn}",
             })
         return news_list
     except Exception as e:
-        print(f"⚠️ Ошибка Crossref: {e}")
+        print(f"   ⚠️ Ошибка Crossref: {e}")
         return []
 
 def get_news_from_pubmed(query, max_items=8):
-    """PubMed E-utilities — золотой стандарт медицинской литературы."""
     try:
         url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
         params = {
             "db": "pubmed",
             "term": f"({query}) AND (free full text[SB] OR open access[Filter])",
-            "retmax": max_items,
-            "sort": "pub_date",
-            "retmode": "json",
+            "retmax": max_items, "sort": "pub_date", "retmode": "json",
             "email": CONTACT_EMAIL,
         }
         headers = {"User-Agent": f"CosmetologyNewsBot/1.0 (mailto:{CONTACT_EMAIL})"}
-        
         resp = requests.get(url, params=params, headers=headers, timeout=15)
         if resp.status_code != 200:
-            print(f"⚠️ PubMed вернул статус {resp.status_code}")
+            print(f"   ⚠️ PubMed статус {resp.status_code}")
             return []
-        
         ids = resp.json().get("esearchresult", {}).get("idlist", [])
         if not ids:
-            print("🔍 PubMed: найдено 0 записей")
+            print("   🔍 PubMed: записей 0")
             return []
-        
         url_summ = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
-        params_summ = {
-            "db": "pubmed",
-            "id": ",".join(ids),
-            "retmode": "json",
-            "email": CONTACT_EMAIL,
-        }
+        params_summ = {"db": "pubmed", "id": ",".join(ids), "retmode": "json", "email": CONTACT_EMAIL}
         resp2 = requests.get(url_summ, params=params_summ, headers=headers, timeout=15)
         if resp2.status_code != 200:
             return []
-        
         docs = resp2.json().get("result", {})
-        print(f"🔍 PubMed: найдено {len(ids)} записей")
-        
+        print(f"   🔍 PubMed: записей {len(ids)}")
+
         news_list = []
         for pmid in ids:
             doc = docs.get(pmid, {})
-            if not doc:
-                continue
-            title = doc.get("title", "")
+            title = doc.get("title", "") if doc else ""
             if not title:
                 continue
             authors = ", ".join(a.get("name", "") for a in doc.get("authors", [])[:3]) or "не указаны"
             pubdate = doc.get("pubdate", "")
-            link = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
             summary = f"Научная статья в PubMed. PMID: {pmid}. Авторы: {authors}. Опубликовано: {pubdate}."
-            
             news_list.append({
-                'title': title,
-                'summary': summary,
-                'link': link,
-                'source': 'PubMed',
-                'feed_url': 'pubmed:dermatology',
+                'title': title, 'summary': summary,
+                'link': f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
+                'source': 'PubMed', 'feed_url': 'pubmed:dermatology',
             })
         return news_list
     except Exception as e:
-        print(f"⚠️ Ошибка PubMed: {e}")
+        print(f"   ⚠️ Ошибка PubMed: {e}")
         return []
 
 def get_news_from_semantic_scholar(query, max_items=6):
-    """Semantic Scholar — AI-поиск по научным статьям с TLDR."""
     try:
         url = "https://api.semanticscholar.org/graph/v1/paper/search"
         params = {
-            "query": query,
-            "limit": max_items,
+            "query": query, "limit": max_items,
             "fields": "title,abstract,authors,year,url,tldr,externalIds",
             "year": "2024-2026",
         }
         headers = {"User-Agent": f"CosmetologyNewsBot/1.0 (mailto:{CONTACT_EMAIL})"}
-        
         resp = requests.get(url, params=params, headers=headers, timeout=15)
         if resp.status_code == 429:
-            print("⚠️ Semantic Scholar: rate limit, пропуск")
+            print("   ⚠️ Semantic Scholar: rate limit")
             return []
         if resp.status_code != 200:
-            print(f"⚠️ Semantic Scholar вернул статус {resp.status_code}")
+            print(f"   ⚠️ Semantic Scholar статус {resp.status_code}")
             return []
-        
         items = resp.json().get("data", [])
-        print(f"🔍 Semantic Scholar: найдено {len(items)} записей")
-        
+        print(f"   🔍 Semantic Scholar: записей {len(items)}")
+
         news_list = []
         for item in items:
             title = item.get("title", "")
             if not title:
                 continue
-            
             abstract = item.get("abstract") or ""
-            tldr = item.get("tldr", {}).get("text", "") if item.get("tldr") else ""
-            
+            tldr = (item.get("tldr") or {}).get("text", "")
             authors = ", ".join(a.get("name", "") for a in (item.get("authors") or [])[:3]) or "не указаны"
             year = item.get("year", "")
-            
-            doi = item.get("externalIds", {}).get("DOI")
+            doi = (item.get("externalIds") or {}).get("DOI")
             link = f"https://doi.org/{doi}" if doi else (item.get("url") or "")
-            
             summary = tldr or abstract or f"Научная статья. Авторы: {authors}. Год: {year}."
             summary = (summary[:1500] + '...') if len(summary) > 1500 else summary
             summary += f" | Авторы: {authors}. Год: {year}."
-            
             news_list.append({
-                'title': title,
-                'summary': summary,
-                'link': link,
-                'source': 'Semantic Scholar',
-                'feed_url': 'semanticscholar:dermatology',
+                'title': title, 'summary': summary, 'link': link,
+                'source': 'Semantic Scholar', 'feed_url': 'semanticscholar:dermatology',
             })
         return news_list
     except Exception as e:
-        print(f"⚠️ Ошибка Semantic Scholar: {e}")
+        print(f"   ⚠️ Ошибка Semantic Scholar: {e}")
         return []
 
-def get_news_from_medrxiv(max_items=10):
-    """medRxiv — свежие медицинские препринты."""
+def get_news_from_medrxiv(max_items=6):
     try:
         end_date = datetime.now().strftime("%Y-%m-%d")
         start_date = (datetime.now() - timedelta(days=14)).strftime("%Y-%m-%d")
-        
         url = f"https://api.medrxiv.org/details/medrxiv/{start_date}/{end_date}/0"
         resp = requests.get(url, timeout=20)
         if resp.status_code != 200:
-            print(f"⚠️ medRxiv вернул статус {resp.status_code}")
+            print(f"   ⚠️ medRxiv статус {resp.status_code}")
             return []
-        
         items = resp.json().get("collection", [])
-        print(f"🔍 medRxiv: получено {len(items)} препринтов")
-        
+        print(f"   🔍 medRxiv: препринтов {len(items)}")
+
+        skin_keywords = ['skin', 'dermat', 'cosmetic', 'aesthetic', 'acne',
+                         'psoriasis', 'eczema', 'hair', 'pigment', 'laser',
+                         'vitiligo', 'melanoma', 'rosacea']
         news_list = []
-        skin_keywords = ['skin', 'dermat', 'cosmetic', 'aesthetic', 'acne', 
-                        'psoriasis', 'eczema', 'hair', 'pigment', 'laser',
-                        'vitiligo', 'melanoma', 'rosacea']
-        
         for item in items[:max_items * 3]:
             title = item.get("title", "")
             if not title:
                 continue
-            
-            category = item.get("category", "").lower()
-            abstract = item.get("abstract", "") or ""
-            combined = (title + " " + abstract + " " + category).lower()
-            
+            combined = (title + " " + (item.get("abstract") or "") + " " + (item.get("category") or "")).lower()
             if not any(kw in combined for kw in skin_keywords):
                 continue
-            
             doi = item.get("doi", "")
-            link = f"https://doi.org/{doi}" if doi else ""
+            abstract = item.get("abstract", "") or ""
             authors = item.get("authors", "не указаны")
             pub_date = item.get("date", "")
-            
             summary = (abstract[:1500] + '...') if len(abstract) > 1500 else abstract
             summary += f" | Авторы: {authors}. Препринт: {pub_date}."
-            
             news_list.append({
-                'title': f"[Препринт] {title}",
-                'summary': summary,
-                'link': link,
-                'source': 'medRxiv',
-                'feed_url': 'medrxiv:dermatology',
+                'title': f"[Препринт] {title}", 'summary': summary,
+                'link': f"https://doi.org/{doi}" if doi else "",
+                'source': 'medRxiv', 'feed_url': 'medrxiv:dermatology',
             })
-            
             if len(news_list) >= max_items:
                 break
-        
-        print(f"🔍 medRxiv после фильтра по теме: {len(news_list)} записей")
+        print(f"   🔍 medRxiv по теме: {len(news_list)}")
         return news_list
     except Exception as e:
-        print(f"⚠️ Ошибка medRxiv: {e}")
+        print(f"   ⚠️ Ошибка medRxiv: {e}")
         return []
 
 def get_news_from_europepmc(query, max_items=6):
-    """Europe PMC — европейский аналог PubMed."""
     try:
         url = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
         params = {
-            "query": query,
-            "format": "json",
-            "resultType": "core",
-            "pageSize": max_items,
-            "sort": "FIRST_PDATE desc",
-            "cursorMark": "*",
+            "query": query, "format": "json", "resultType": "core",
+            "pageSize": max_items, "sort": "FIRST_PDATE desc", "cursorMark": "*",
         }
         headers = {"User-Agent": f"CosmetologyNewsBot/1.0 (mailto:{CONTACT_EMAIL})"}
-        
         resp = requests.get(url, params=params, headers=headers, timeout=15)
         if resp.status_code != 200:
-            print(f"⚠️ Europe PMC вернул статус {resp.status_code}")
+            print(f"   ⚠️ Europe PMC статус {resp.status_code}")
             return []
-        
         items = resp.json().get("resultList", {}).get("result", [])
-        print(f"🔍 Europe PMC: найдено {len(items)} записей")
-        
+        print(f"   🔍 Europe PMC: записей {len(items)}")
+
         news_list = []
         for item in items:
             title = item.get("title", "")
             if not title:
                 continue
-            
             abstract = item.get("abstractText", "")
             authors = ", ".join(a.get("fullName", "") for a in (item.get("authorList", {}).get("author", [])[:3])) or "не указаны"
             year = item.get("pubYear", "")
-            
             pmid = item.get("pmid")
             doi = item.get("doi")
             link = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/" if pmid else (f"https://doi.org/{doi}" if doi else "")
-            
             summary = (abstract[:1500] + '...') if len(abstract) > 1500 else abstract
             if not summary:
                 summary = f"Научная статья. Авторы: {authors}. Год: {year}."
             summary += f" | Авторы: {authors}. Год: {year}."
-            
             news_list.append({
-                'title': title,
-                'summary': summary,
-                'link': link,
-                'source': 'Europe PMC',
-                'feed_url': 'europepmc:dermatology',
+                'title': title, 'summary': summary, 'link': link,
+                'source': 'Europe PMC', 'feed_url': 'europepmc:dermatology',
             })
         return news_list
     except Exception as e:
-        print(f"⚠️ Ошибка Europe PMC: {e}")
+        print(f"   ⚠️ Ошибка Europe PMC: {e}")
         return []
 
-# ========== СБОР ПО КАТЕГОРИИ ==========
-def get_all_news_from_category(feeds, start_index):
-    """Round-robin обход всех источников категории."""
-    num_feeds = len(feeds)
-    if num_feeds == 0:
-        return [], 0
-
-    all_news = []
-    for i in range(num_feeds):
-        idx = (start_index + i) % num_feeds
-        feed = feeds[idx]
-        print(f"📡 Проверяем источник #{idx+1}: {feed}")
-        
-        if feed.startswith('crossref:'):
-            parts = feed.split(':', 2)
-            issn = parts[1]
-            query = parts[2] if len(parts) > 2 else "dermatology OR skin"
-            news = get_news_from_crossref(issn, query, max_items=6)
-        elif feed.startswith('pubmed:'):
-            query = feed.split(':', 1)[1]
-            news = get_news_from_pubmed(query, max_items=8)
-        elif feed.startswith('semanticscholar:'):
-            query = feed.split(':', 1)[1]
-            news = get_news_from_semantic_scholar(query, max_items=6)
-        elif feed == 'medrxiv':
-            news = get_news_from_medrxiv(max_items=6)
-        elif feed.startswith('europepmc:'):
-            query = feed.split(':', 1)[1]
-            news = get_news_from_europepmc(query, max_items=6)
-        else:
-            news = get_news_from_rss(feed, max_items=10)
-        
-        all_news.extend(news)
-        time.sleep(0.5)
-
-    next_index = (start_index + 1) % num_feeds
-    return all_news, next_index
+# ========== ДИСПЕТЧЕР ИСТОЧНИКОВ ==========
+def fetch_from_feed(feed):
+    if feed.startswith('crossref:'):
+        parts = feed.split(':', 2)
+        return get_news_from_crossref(parts[1], parts[2] if len(parts) > 2 else "dermatology OR skin")
+    if feed.startswith('pubmed:'):
+        return get_news_from_pubmed(feed.split(':', 1)[1])
+    if feed.startswith('semanticscholar:'):
+        return get_news_from_semantic_scholar(feed.split(':', 1)[1])
+    if feed == 'medrxiv':
+        return get_news_from_medrxiv()
+    if feed.startswith('europepmc:'):
+        return get_news_from_europepmc(feed.split(':', 1)[1])
+    return get_news_from_rss(feed, max_items=10)
 
 # ========== ФИЛЬТРЫ ==========
 def is_from_telegram(feed_url):
@@ -529,7 +448,46 @@ def is_relevant(news_item):
     text = (news_item['title'] + ' ' + news_item['summary']).lower()
     return any(kw in text for kw in RELEVANT_KEYWORDS)
 
-# ========== ПРОМПТ 1: САЙТЫ / НАУЧНЫЕ API ==========
+def get_feeds_for_category(cat):
+    if cat == 'site':
+        return SITE_FEEDS
+    if cat == 'science':
+        return SCIENCE_FEEDS
+    return TG_FEEDS
+
+# ========== ПОИСК НОВОСТИ В КАТЕГОРИИ (round-robin) ==========
+def find_news_in_category(cat, memory, posted_links, posted_titles):
+    """
+    Проходит источники категории по кругу, начиная с указателя.
+    Возвращает (новость, новый_указатель). Если ничего нет — (None, указатель+1).
+    """
+    feeds = get_feeds_for_category(cat)
+    n = len(feeds)
+    if n == 0:
+        return None, 0
+    start = memory.get(f'{cat}_index', 0) % n
+
+    for i in range(n):
+        idx = (start + i) % n
+        feed = feeds[idx]
+        print(f"   📡 [{cat.upper()}] источник #{idx+1}/{n}: {feed}")
+        news = fetch_from_feed(feed)
+
+        for item in news:
+            if item['link'] in posted_links:
+                continue
+            if normalize_title(item['title']) in posted_titles:
+                continue
+            if not is_relevant(item):
+                continue
+            print(f"   ✅ Найдена новость: {item['title'][:60]}")
+            return item, (idx + 1) % n  # сдвигаем указатель на следующий источник
+        time.sleep(0.3)
+
+    print(f"   ❌ В категории {cat.upper()} новостей нет")
+    return None, (start + 1) % n  # сдвигаем, чтобы не проверять тот же источник вечно
+
+# ========== ПРОМПТ 1: САЙТЫ / НАУКА ==========
 def process_site_news(news_item):
     prompt = f"""Ты — нейтральный научный обозреватель Telegram-канала о косметологии и доказательной медицине.
 ИСТОЧНИК: {news_item['source']}
@@ -575,7 +533,7 @@ def process_site_news(news_item):
         )
         return resp.choices[0].message.content.strip()
     except Exception as e:
-        print(f"⚠️ Ошибка Groq (сайт): {e}")
+        print(f"⚠️ Ошибка Groq (сайт/наука): {e}")
         return None
 
 # ========== ПРОМПТ 2: TELEGRAM ==========
@@ -608,7 +566,7 @@ def process_tg_news(news_item):
 
 ПРАВИЛА:
 - Живой язык, без канцеляризмов
-- 1-2 тематических эмодзи (🔬 💉 🧬 🌿 📊)
+- 1-2 тематических эмодзи (🔬 💉  🌿 📊)
 - НЕ копируй дословно, переписывай своими словами
 - НЕ упоминай источник, НЕ добавляй ссылки
 
@@ -647,134 +605,89 @@ def post_to_telegram(text):
         print(f"⚠️ Ошибка Telegram: {e}")
     return False
 
-# ========== СБОР И ФИЛЬТРАЦИЯ ==========
-def collect_and_filter(feeds, start_index, posted_links, posted_titles):
-    raw_news, next_index = get_all_news_from_category(feeds, start_index)
-    print(f"\n📊 Всего собрано: {len(raw_news)} новостей")
-
-    unique_news = []
-    for item in raw_news:
-        if item['link'] in posted_links: continue
-        normalized = normalize_title(item['title'])
-        if normalized in posted_titles: continue
-        if not is_relevant(item): continue
-        unique_news.append(item)
-
-    print(f"✅ После фильтрации: {len(unique_news)} подходящих новостей")
-    return unique_news, next_index
-
 # ========== ГЛАВНЫЙ ЦИКЛ ==========
 def main():
     print("🚀 Запуск агрегатора (Косметология и Медицина)...\n")
 
     memory = load_memory()
-    posted_links = memory.get('posted_links', [])
-    posted_titles = memory.get('posted_titles', [])
-    site_index = memory.get('site_index', 0)
-    tg_index = memory.get('tg_index', 0)
-    last_source = memory.get('last_source', 'tg')
+    posted_links = memory['posted_links']
+    posted_titles = memory['posted_titles']
 
     print(f"🧠 В памяти: {len(posted_links)} ссылок, {len(posted_titles)} заголовков")
-    print(f"📂 Последний источник: {last_source.upper()}")
-    print(f"📊 Индексы: сайты={site_index}, телеграм={tg_index}\n")
+    print(f"🔁 Цикл категорий: САЙТ → НАУКА → TG → по кругу")
+    print(f"📌 Указатели: сайт=#{memory['site_index']+1}, наука=#{memory['science_index']+1}, тг=#{memory['tg_index']+1}")
+    print(f"📂 Следующая категория: {memory['next_category'].upper()}\n")
 
-    # Определяем приоритет и запасной источник
-    if last_source == 'site':
-        priority_source = 'tg'
-        priority_feeds = TG_FEEDS
-        priority_index = tg_index
-        fallback_source = 'site'
-        fallback_feeds = SITE_FEEDS
-        fallback_index = site_index
-    else:
-        priority_source = 'site'
-        priority_feeds = SITE_FEEDS
-        priority_index = site_index
-        fallback_source = 'tg'
-        fallback_feeds = TG_FEEDS
-        fallback_index = tg_index
+    start_pos = CATEGORIES.index(memory['next_category'])
 
-    # ШАГ 1: Приоритетная категория
-    print(f"📰 Приоритет: {priority_source.upper()} ({len(priority_feeds)} источников)")
-    unique_news, priority_next_index = collect_and_filter(priority_feeds, priority_index, posted_links, posted_titles)
+    chosen_item = None
+    chosen_cat = None
 
-    current_source = priority_source
-    next_index = priority_next_index
+    # Проходим до 3 категорий подряд, пока не найдём новость
+    for step in range(3):
+        cat = CATEGORIES[(start_pos + step) % 3]
+        print(f"📰 Проверяем категорию: {cat.upper()}")
+        item, new_index = find_news_in_category(cat, memory, posted_links, posted_titles)
+        memory[f'{cat}_index'] = new_index  # сохраняем указатель категории
+        if item:
+            chosen_item = item
+            chosen_cat = cat
+            break
+        print()
 
-    # ШАГ 2: Fallback, если в приоритетной нет новостей
-    if not unique_news:
-        print(f"\n⚠️ В {priority_source.upper()} нет новых новостей. Пробуем запасной источник...")
-        print(f"📰 Запасной: {fallback_source.upper()} ({len(fallback_feeds)} источников)")
-        unique_news, fallback_next_index = collect_and_filter(fallback_feeds, fallback_index, posted_links, posted_titles)
-
-        if unique_news:
-            current_source = fallback_source
-            next_index = fallback_next_index
-        else:
-            print(f"\n❌ Новостей нет ни в одной категории. Пропускаем этот час.")
-            memory['site_index'] = (site_index + 1) % len(SITE_FEEDS)
-            memory['tg_index'] = (tg_index + 1) % len(TG_FEEDS)
-            save_memory(memory)
-            return
-
-    # Берем первую подходящую новость
-    news_item = unique_news[0]
-    print(f"\n📝 Выбираем: {news_item['title'][:60]}...")
-    print(f"📡 Источник: {news_item['source']}")
-    print(f"📂 Категория: {current_source.upper()}\n")
-
-    # Обработка через Groq
-    if is_from_telegram(news_item['feed_url']):
-        print("→ Промпт: TELEGRAM (рерайт + антиреклама + обезличивание)")
-        post_text = process_tg_news(news_item)
-    else:
-        print("→ Промпт: САЙТ/НАУЧНЫЙ (перевод + нейтральный обзор)")
-        post_text = process_site_news(news_item)
-
-    if not post_text:
-        print("⏭ Пропущено (реклама или ошибка Groq).")
-        posted_links.append(news_item['link'])
-        posted_titles.append(normalize_title(news_item['title']))
-        memory['posted_links'] = posted_links[-1000:]
-        memory['posted_titles'] = posted_titles[-1000:]
-        if current_source == 'site':
-            memory['site_index'] = next_index
-        else:
-            memory['tg_index'] = next_index
+    if not chosen_item:
+        print("❌ Новостей нет ни в одной категории. Пропускаем этот час.")
+        memory['next_category'] = CATEGORIES[(start_pos + 1) % 3]
         save_memory(memory)
         return
 
-    # Очистка и форматирование
+    print(f"\n📝 Выбираем: {chosen_item['title'][:60]}...")
+    print(f"📡 Источник: {chosen_item['source']}")
+    print(f"📂 Категория: {chosen_cat.upper()}\n")
+
+    # Обработка через Groq
+    if chosen_cat == 'tg':
+        print("→ Промпт: TELEGRAM (рерайт + антиреклама + обезличивание)")
+        post_text = process_tg_news(chosen_item)
+    else:
+        print("→ Промпт: САЙТ/НАУКА (перевод + нейтральный обзор)")
+        post_text = process_site_news(chosen_item)
+
+    if not post_text:
+        print("⏭ Пропущено (реклама или ошибка Groq).")
+        posted_links.append(chosen_item['link'])
+        posted_titles.append(normalize_title(chosen_item['title']))
+        memory['posted_links'] = posted_links[-1000:]
+        memory['posted_titles'] = posted_titles[-1000:]
+        memory['next_category'] = chosen_cat  # в следующий час пробуем ту же категорию
+        save_memory(memory)
+        return
+
     post_text = format_post(clean_post_text(post_text))
 
-    print("\n--- ГОТОВЫЙ ПОСТ (после очистки и форматирования) ---")
+    print("\n--- ГОТОВЫЙ ПОСТ ---")
     print(post_text)
     print("--------------------\n")
 
-    # Публикация
     if post_to_telegram(post_text):
-        print(f"🎉 Успешно опубликовано!")
+        print("🎉 Успешно опубликовано!")
 
-        posted_links.append(news_item['link'])
-        posted_titles.append(normalize_title(news_item['title']))
+        posted_links.append(chosen_item['link'])
+        posted_titles.append(normalize_title(chosen_item['title']))
         memory['posted_links'] = posted_links[-1000:]
         memory['posted_titles'] = posted_titles[-1000:]
 
-        if current_source == 'site':
-            memory['site_index'] = next_index
-        else:
-            memory['tg_index'] = next_index
-
-        # Чередование: меняем приоритет только если опубликовали из приоритетной категории
-        if current_source == priority_source:
-            memory['last_source'] = current_source
+        # Следующий запуск — следующая категория по кругу
+        memory['next_category'] = CATEGORIES[(CATEGORIES.index(chosen_cat) + 1) % 3]
 
         save_memory(memory)
         print(f"💾 Память сохранена.")
-        print(f"🔄 Следующий приоритет: {'TELEGRAM' if memory['last_source'] == 'site' else 'САЙТЫ'}")
-        print(f"📊 Индексы: сайты={memory['site_index']}, телеграм={memory['tg_index']}")
+        print(f"🔄 Следующая категория: {memory['next_category'].upper()}")
+        print(f"📌 Указатели: сайт=#{memory['site_index']+1}, наука=#{memory['science_index']+1}, тг=#{memory['tg_index']+1}")
     else:
         print("❌ Не удалось опубликовать.")
+        memory['next_category'] = chosen_cat  # повторим ту же категорию в следующий час
+        save_memory(memory)
 
 if __name__ == "__main__":
     main()
