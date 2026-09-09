@@ -14,19 +14,16 @@ CHANNEL_ID = "@derma_cosmo_facts"
 MEMORY_FILE = "posted_news.json"
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-# ========== ИСТОЧНИКИ (все проверены 09.09.2026) ==========
+# ========== ИСТОЧНИКИ ==========
 SITE_FEEDS = [
-    # 🌍 Западные (профильные)
     'https://www.sciencedaily.com/rss/health_medicine/skin_care.xml',
     'https://www.healio.com/rss/dermatology',
-    # 🇰🇷 Корея
-    'https://www.bosa.co.kr/rss/allArticle.xml',           # 의학신문 — мед. газета (корейский)
-    'https://m.koreaherald.com/rss/newsAll',               # Korea Herald
-    'https://en.yna.co.kr/RSS/news.xml',                   # Yonhap News
-    # 🇨🇳 Китай
-    'http://www.chinadaily.com.cn/rss/lifestyle_rss.xml',  # China Daily Lifestyle
-    'https://www.scmp.com/rss/2/feed',                     # SCMP (Гонконг/Китай)
-    'https://weekly.chinacdc.cn/rss/current.xml',          # China CDC Weekly
+    'https://www.bosa.co.kr/rss/allArticle.xml',
+    'https://m.koreaherald.com/rss/newsAll',
+    'https://en.yna.co.kr/RSS/news.xml',
+    'http://www.chinadaily.com.cn/rss/lifestyle_rss.xml',
+    'https://www.scmp.com/rss/2/feed',
+    'https://weekly.chinacdc.cn/rss/current.xml',
 ]
 
 TG_FEEDS = [
@@ -36,21 +33,16 @@ TG_FEEDS = [
     'https://tg.i-c-a.su/rss/cosmetologiainside',
 ]
 
-# Ключевые слова тематики: EN + RU + 🇰🇷 KO + 🇨 CN
 RELEVANT_KEYWORDS = [
-    # English
     'skin', 'dermatology', 'cosmetic', 'aesthetic', 'acne',
     'collagen', 'wrinkle', 'peptide', 'exosome', 'laser',
     'psoriasis', 'eczema', 'melanoma', 'rosacea', 'pigment',
     'botox', 'botulinum', 'filler', 'rejuvenation', 'aging',
     'sunscreen', 'moisturizer', 'skincare', 'beauty',
-    # Russian
     'кожа', 'косметолог', 'дерматолог', 'эстетическ', 'акне',
-    # Korean 🇰
     '피부', '화장품', '뷰티', '미용', '성형', '피부과',
     '보톡스', '필러', '레이저', '콜라겐', '엑소좀', '여드름',
     '아토피', '탈모', '주름', '색소', '자외선',
-    # Chinese 🇨
     '皮肤', '美容', '医美', '化妆品', '整形', '激光',
     '胶原', '痤疮', '湿疹', '护肤', '美白',
 ]
@@ -78,6 +70,68 @@ def normalize_title(title):
     title = re.sub(r'[.!?\s]+$', '', title)
     title = re.sub(r'\s+', ' ', title)
     return title
+
+# ========== 🛡️ ПОСТ-ОБРАБОТКА ==========
+def clean_post_text(text):
+    """
+    Удаляет из финального текста поста:
+    1. CJK-символы (китайские, корейские, японские иероглифы)
+    2. Лишние пробелы и переносы
+    3. Артефакты вида "首尔ский" → "ский"
+    """
+    if not text:
+        return text
+    
+    # Удаляем все CJK-символы (китайские/корейские/японские иероглифы)
+    # Диапазоны Unicode: CJK Unified Ideographs, Hangul, Katakana, Hiragana и т.д.
+    cjk_pattern = re.compile(
+        "["
+        "\u2E80-\u2EFF"  # CJK Radicals Supplement
+        "\u2F00-\u2FDF"  # Kangxi Radicals
+        "\u3040-\u309F"  # Hiragana
+        "\u30A0-\u30FF"  # Katakana
+        "\u3130-\u318F"  # Hangul Compatibility Jamo
+        "\u3400-\u4DBF"  # CJK Unified Ideographs Extension A
+        "\u4E00-\u9FFF"  # CJK Unified Ideographs (китайские)
+        "\uAC00-\uD7AF"  # Hangul Syllables (корейские)
+        "\uF900-\uFAFF"  # CJK Compatibility Ideographs
+        "\uFE30-\uFE4F"  # CJK Compatibility Forms
+        "\U00020000-\U0002A6DF"  # CJK Extension B
+        "]+", re.UNICODE
+    )
+    text = cjk_pattern.sub("", text)
+    
+    # Удаляем "висячие" одиночные пробелы и склеиваем слова
+    text = re.sub(r'\s+', ' ', text)
+    
+    # Убираем пробелы перед точками и запятыми
+    text = re.sub(r'\s+([.,!?])', r'\1', text)
+    
+    # Убираем двойные пробелы
+    text = re.sub(r'  +', ' ', text)
+    
+    # Убираем переносы строк (Telegram HTML их игнорирует, но для чистоты)
+    text = text.replace('\n', ' ').replace('\r', '')
+    
+    # Исправляем "скийский" и подобные повторы окончаний
+    text = re.sub(r'скийский', 'ский', text)
+    
+    # Убираем пустые теги <b></b>
+    text = re.sub(r'<b>\s*</b>', '', text)
+    
+    # Убираем повторяющиеся хэштеги
+    hashtags = re.findall(r'#\S+', text)
+    seen = set()
+    unique_hashtags = []
+    for h in hashtags:
+        if h not in seen:
+            seen.add(h)
+            unique_hashtags.append(h)
+    # Оставляем только уникальные хэштеги в конце
+    text_without_hashtags = re.sub(r'#\S+', '', text).strip()
+    text = text_without_hashtags + ' ' + ' '.join(unique_hashtags)
+    
+    return text.strip()
 
 # ========== ЧТЕНИЕ RSS ==========
 def clean_html(text):
@@ -114,7 +168,6 @@ def get_news_from_rss(feed_url, max_items=10):
         return []
 
 def get_all_news_from_category(feeds, start_index):
-    """Проходим по ВСЕМ источникам категории, начиная со start_index (round-robin)"""
     num_feeds = len(feeds)
     if num_feeds == 0:
         return [], 0
@@ -138,17 +191,21 @@ def is_relevant(news_item):
     text = (news_item['title'] + ' ' + news_item['summary']).lower()
     return any(kw in text for kw in RELEVANT_KEYWORDS)
 
-# ========== ПРОМПТ 1: САЙТЫ (перевод + нейтральный обзор) ==========
+# ========== ПРОМПТ 1: САЙТЫ ==========
 def process_site_news(news_item):
     prompt = f"""Ты — нейтральный научный обозреватель Telegram-канала о косметологии и доказательной медицине.
 ИСТОЧНИК: {news_item['source']}
 ОРИГИНАЛЬНЫЙ ЗАГОЛОВОК: {news_item['title']}
 ТЕКСТ: {news_item['summary']}
 
-ВАЖНО: Текст может быть на английском, корейском или китайском языке. Пиши пост НА РУССКОМ.
+ВАЖНО — ЯЗЫК:
+- Текст может быть на английском, корейском (한글) или китайском (汉字) языке.
+- Пиши пост ИСКЛЮЧИТЕЛЬНО НА РУССКОМ ЯЗЫКЕ.
+- ВСЕ географические названия, имена, термины ОБЯЗАТЕЛЬНО переводись/транслитерируй на русский (Seoul → Сеул, Beijing → Пекин, 서울 → Сеул).
+- ⛔ В ФИНАЛЬНОМ ТЕКСТЕ НЕ ДОЛЖНО БЫТЬ ни одного иероглифа (한글, 汉字, 仮名) — только кириллица, латиница, цифры и знаки препинания.
 
 СТРУКТУРА ПОСТА:
-1. <b>Цепляющий заголовок</b> (переведи на русский, профессиональный тон)
+1. <b>Цепляющий заголовок</b> (на русском, профессиональный тон)
 2. Введение (1-2 предложения): суть новости, почему это важно
 3. Основная часть (3-5 предложений): факты, цифры, детали исследования или методики
 4. Практическая польза (1-2 предложения): что это значит для отрасли
@@ -158,10 +215,10 @@ def process_site_news(news_item):
 ⛔ ЗАПРЕЩЕНО:
 - НЕ используй первое лицо: «мы», «я», «у нас», «наш», «в нашей практике», «мы применяем».
 - Пиши БЕЗЛИЧНО: «применяется», «используется», «врачи отмечают», «исследование показывает», «специалисты рекомендуют».
-- НЕ упоминай конкретные клиники, врачей, бренды оборудования и препаратов как рекламу.
-- Коммерческие названия (Endolift, LASEMAR, i-PRF, Juvederm, Botox, Restylane, Morpheus8 и т.п.) заменяй на НАУЧНЫЕ/ОБЩИЕ термины: «диодный лазер 1470 нм», «PRF-терапия», «препарат ботулотоксина типа А», «гиалуроновый филлер», «микроигольчатый RF».
-- Никаких призывов: «обсудите с врачом», «запишитесь», «ваша кожа заслуживает», «обратитесь к специалисту».
-- Текст должен быть НЕЙТРАЛЬНЫМ информационным обзором, а НЕ авторской колонкой клиники.
+- НЕ упоминай конкретные клиники, врачей, бренды оборудования и препаратов.
+- Коммерческие названия (Endolift, LASEMAR, i-PRF, Juvederm, Botox, Morpheus8 и т.п.) заменяй на общие термины: «диодный лазер 1470 нм», «PRF-терапия», «ботулотоксин типа А», «гиалуроновый филлер», «микроигольчатый RF».
+- Никаких призывов: «обсудите с врачом», «запишитесь», «ваша кожа заслуживает».
+- Текст должен быть НЕЙТРАЛЬНЫМ информационным обзором.
 
 ПРАВИЛА:
 - Объем: 4-8 предложений
@@ -174,7 +231,7 @@ def process_site_news(news_item):
         resp = groq_client.chat.completions.create(
             model="qwen/qwen3.8-27b",
             messages=[
-                {"role": "system", "content": "Ты нейтральный научный обозреватель. Никаких «мы», брендов и призывов. Строго следуй формату HTML."},
+                {"role": "system", "content": "Ты нейтральный научный обозреватель. Пиши ТОЛЬКО на русском, БЕЗ иероглифов (한글/汉字). Никаких «мы», брендов и призывов."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.6,
@@ -185,7 +242,7 @@ def process_site_news(news_item):
         print(f"⚠️ Ошибка Groq (сайт): {e}")
         return None
 
-# ========== ПРОМПТ 2: TELEGRAM (рерайт + антиреклама + обезличивание) ==========
+# ========== ПРОМПТ 2: TELEGRAM ==========
 def process_tg_news(news_item):
     prompt = f"""Ты — нейтральный научный обозреватель Telegram-канала о косметологии.
 ТЕКСТ ИСХОДНОГО ПОСТА:
@@ -202,7 +259,7 @@ def process_tg_news(news_item):
 - Призыв подписаться на конкретного автора
 Если это реклама — ответь ОДНИМ словом: SKIP
 
-ШАГ 2: Если это НЕ реклама, а полезный экспертный контент (разбор, кейс, научная новость, совет):
+ШАГ 2: Если это НЕ реклама, а полезный экспертный контент:
 
 СТРУКТУРА ПОСТА:
 1. <b>Цепляющий заголовок</b>
@@ -212,14 +269,25 @@ def process_tg_news(news_item):
 5. 2-3 хэштега (#косметология #медицина)
 
 ⛔ КРИТИЧЕСКИ ВАЖНО — ЗАПРЕЩЕНО:
-1. НИКАКОГО первого лица: ЗАПРЕЩЕНЫ слова «мы», «я», «у нас», «наш», «в нашей практике», «мы применяем», «в моем опыте», «нашими пациентами».
-   ПИШИ БЕЗЛИЧНО: «применяется», «используется», «врачи отмечают», «в клинической практике используется», «исследование показывает».
-2. ОБЕЗЛИЧИВАЙ БРЕНДЫ:
-   - Названия аппаратов (Endolift, LASEMAR, Morpheus8, Sylfirm, Picosure) → заменяй на технические характеристики: «диодный лазер 1470 нм», «микроигольчатый RF-аппарат», «пикосекундный лазер».
-   - Названия препаратов (Juvederm, Restylane, Belotero, i-PRF) → заменяй на общий тип: «гиалуроновый филлер», «препарат на основе PRF», «биоревитализант».
-   - Можно ОДИН раз упомянуть бренд в скобках как пример, но НЕ делать на нем акцент.
-3. НИКАКИХ призывов к действию: «обсудите с врачом», «запишитесь на консультацию», «ваша кожа заслуживает», «обратитесь к специалисту», «приходите к нам».
-4. Текст должен звучать как НЕЙТРАЛЬНЫЙ научный обзор, а НЕ как реклама клиники или личное мнение врача.
+
+1. ЯЗЫК:
+- Пиши ИСКЛЮЧИТЕЛЬНО НА РУССКОМ.
+- В ФИНАЛЬНОМ ТЕКСТЕ НЕ ДОЛЖНО БЫТЬ ни одного иероглифа или корейского/китайского символа (한글, 汉字, 仮名).
+- Все иностранные названия городов, терминов переводись на русский (Seoul → Сеул, Beijing → Пекин).
+
+2. ЛИЧНОСТЬ:
+- ЗАПРЕЩЕНЫ слова «мы», «я», «у нас», «наш», «в нашей практике», «мы применяем», «в моем опыте».
+- ПИШИ БЕЗЛИЧНО: «применяется», «используется», «врачи отмечают», «в клинической практике используется».
+
+3. БРЕНДЫ:
+- Названия аппаратов (Endolift, LASEMAR, Morpheus8, Sylfirm, Picosure) → заменяй на технические характеристики: «диодный лазер 1470 нм», «микроигольчатый RF-аппарат», «пикосекундный лазер».
+- Названия препаратов (Juvederm, Restylane, Belotero, i-PRF) → заменяй на общий тип: «гиалуроновый филлер», «препарат на основе PRF», «биоревитализант».
+
+4. ПРИЗЫВЫ:
+- Никаких: «обсудите с врачом», «запишитесь», «ваша кожа заслуживает», «обратитесь к специалисту».
+
+5. ТОН:
+- Текст должен звучать как НЕЙТРАЛЬНЫЙ научный обзор, а НЕ как реклама клиники или личное мнение врача.
 
 ПРАВИЛА:
 - Объем: 4-8 предложений
@@ -233,7 +301,7 @@ def process_tg_news(news_item):
         resp = groq_client.chat.completions.create(
             model="qwen/qwen3.8-27b",
             messages=[
-                {"role": "system", "content": "Ты нейтральный научный обозреватель. ЗАПРЕЩЕНЫ слова «мы», «я», «у нас», бренды и призывы. Отвечай ТОЛЬКО HTML-текстом или словом SKIP."},
+                {"role": "system", "content": "Ты нейтральный научный обозреватель. Пиши ТОЛЬКО на русском, БЕЗ иероглифов (한글/汉字). ЗАПРЕЩЕНЫ «мы», «я», «у нас», бренды и призывы."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
@@ -294,7 +362,6 @@ def main():
     print(f"📂 Последний источник: {last_source.upper()}")
     print(f"📊 Индексы: сайты={site_index}, телеграм={tg_index}\n")
 
-    # Определяем приоритетную категорию (чередование) и запасную (fallback)
     if last_source == 'site':
         priority_source = 'tg'
         priority_feeds = TG_FEEDS
@@ -310,14 +377,12 @@ def main():
         fallback_feeds = TG_FEEDS
         fallback_index = tg_index
 
-    # ШАГ 1: Приоритетная категория
     print(f"📰 Приоритет: {priority_source.upper()} ({len(priority_feeds)} источников)")
     unique_news, priority_next_index = collect_and_filter(priority_feeds, priority_index, posted_links, posted_titles)
 
     current_source = priority_source
     next_index = priority_next_index
 
-    # ШАГ 2: Fallback — если в приоритетной нет новостей
     if not unique_news:
         print(f"\n⚠️ В {priority_source.upper()} нет новых новостей. Пробуем запасной источник...")
         print(f"📰 Запасной: {fallback_source.upper()} ({len(fallback_feeds)} источников)")
@@ -333,13 +398,11 @@ def main():
             save_memory(memory)
             return
 
-    # Берем первую подходящую новость
     news_item = unique_news[0]
     print(f"\n📝 Выбираем: {news_item['title'][:60]}...")
     print(f"📡 Источник: {news_item['source']}")
     print(f"📂 Категория: {current_source.upper()}\n")
 
-    # Обрабатываем через Groq
     if is_from_telegram(news_item['feed_url']):
         print("→ Промпт: TELEGRAM (рерайт + антиреклама + обезличивание)")
         post_text = process_tg_news(news_item)
@@ -360,11 +423,13 @@ def main():
         save_memory(memory)
         return
 
-    print("\n--- ГОТОВЫЙ ПОСТ ---")
+    # 🛡️ ПОСТ-ОБРАБОТКА: удаляем все CJK-иероглифы и артефакты
+    post_text = clean_post_text(post_text)
+
+    print("\n--- ГОТОВЫЙ ПОСТ (после очистки) ---")
     print(post_text)
     print("--------------------\n")
 
-    # Публикация
     if post_to_telegram(post_text):
         print(f"🎉 Успешно опубликовано!")
 
@@ -378,7 +443,6 @@ def main():
         else:
             memory['tg_index'] = next_index
 
-        # Чередование: меняем приоритет только если опубликовали из приоритетной категории
         if current_source == priority_source:
             memory['last_source'] = current_source
 
