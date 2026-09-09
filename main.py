@@ -5,16 +5,18 @@ import os
 import json
 import time
 import re
+from datetime import datetime, timedelta
 
 # ========== НАСТРОЙКИ ==========
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 CHANNEL_ID = "@derma_cosmo_facts"
+CONTACT_EMAIL = "cosmetology-bot@example.com"
 
 MEMORY_FILE = "posted_news.json"
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-# ========== ИСТОЧНИКИ ==========
+# ========== ИСТОЧНИКИ (16 сайтов + 4 TG) ==========
 SITE_FEEDS = [
     # 🌍 Западные
     'https://www.sciencedaily.com/rss/health_medicine/skin_care.xml',
@@ -27,10 +29,16 @@ SITE_FEEDS = [
     'http://www.chinadaily.com.cn/rss/lifestyle_rss.xml',
     'https://www.scmp.com/rss/2/feed',
     'https://weekly.chinacdc.cn/rss/current.xml',
-    # 🇷🇺 Россия (добавлены 09.09.2026)
+    # 🇷🇺 Россия
     'https://nplus1.ru/rss',
     'https://elementy.ru/rss/news',
     'https://scientificrussia.ru/rss',
+    # 🔬 Научные API (псевдо-источники)
+    'crossref:0140-6736:skin OR dermatology OR cosmetic OR aesthetic OR acne OR psoriasis',
+    'pubmed:dermatology OR cosmetic OR aesthetic OR skin OR botulinum OR filler',
+    'semanticscholar:dermatology cosmetic skin aesthetic',
+    'medrxiv',
+    'europepmc:dermatology OR cosmetic OR aesthetic OR skin',
 ]
 
 TG_FEEDS = [
@@ -46,6 +54,7 @@ RELEVANT_KEYWORDS = [
     'psoriasis', 'eczema', 'melanoma', 'rosacea', 'pigment',
     'botox', 'botulinum', 'filler', 'rejuvenation', 'aging',
     'sunscreen', 'moisturizer', 'skincare', 'beauty',
+    'vitiligo', 'atopic', 'alopecia', 'dermatitis', 'pruritus',
     'кожа', 'косметолог', 'дерматолог', 'эстетическ', 'акне',
     'псориаз', 'морщины', 'коллаген', 'ботокс', 'филлер',
     'пилинг', 'лазер', 'омоложение', 'дерматит', 'розацеа',
@@ -80,7 +89,7 @@ def normalize_title(title):
     title = re.sub(r'\s+', ' ', title)
     return title
 
-# ========== 🛡️ ОЧИСТКА ==========
+# ========== 🛡️ ОЧИСТКА ОТ ИЕРОГЛИФОВ ==========
 def clean_post_text(text):
     if not text:
         return text
@@ -161,7 +170,322 @@ def get_news_from_rss(feed_url, max_items=10):
         print(f"⚠️ Ошибка чтения {feed_url}: {e}")
         return []
 
+# ========== 🔬 НАУЧНЫЕ API ==========
+def fetch_abstract_from_openalex(doi):
+    """Добирает аннотацию из OpenAlex по DOI."""
+    try:
+        url = f"https://api.openalex.org/works/doi:{doi}"
+        resp = requests.get(url, params={"mailto": CONTACT_EMAIL}, timeout=10)
+        if resp.status_code != 200:
+            return ""
+        data = resp.json()
+        inv = data.get("abstract_inverted_index")
+        if not inv:
+            return ""
+        positions = []
+        for word, idxs in inv.items():
+            for i in idxs:
+                positions.append((i, word))
+        positions.sort()
+        return " ".join(w for _, w in positions)
+    except Exception:
+        return ""
+
+def get_news_from_crossref(issn, query, max_items=6):
+    """Crossref API — свежие статьи журнала по ISSN."""
+    try:
+        url = "https://api.crossref.org/works"
+        params = {
+            "query": query,
+            "filter": f"issn:{issn},type:journal-article",
+            "sort": "published",
+            "order": "desc",
+            "rows": max_items,
+            "mailto": CONTACT_EMAIL,
+        }
+        headers = {"User-Agent": f"CosmetologyNewsBot/1.0 (mailto:{CONTACT_EMAIL})"}
+
+        resp = requests.get(url, params=params, headers=headers, timeout=20)
+        if resp.status_code != 200:
+            print(f"⚠️ Crossref вернул статус {resp.status_code}")
+            return []
+
+        items = resp.json().get("message", {}).get("items", [])
+        source_name = "The Lancet" if issn == "0140-6736" else f"Journal {issn}"
+        print(f"🔍 {source_name} (Crossref): найдено {len(items)} записей")
+
+        news_list = []
+        for n, item in enumerate(items):
+            title = item.get("title", [""])[0] if item.get("title") else ""
+            if not title:
+                continue
+            doi = item.get("DOI", "")
+            link = f"https://doi.org/{doi}"
+
+            authors = []
+            for a in item.get("author", [])[:3]:
+                name = f"{a.get('given', '')} {a.get('family', '')}".strip()
+                if name:
+                    authors.append(name)
+            authors_str = ", ".join(authors) if authors else "не указаны"
+
+            date_parts = item.get("published", {}).get("date-parts", [[None]])[0]
+            year = date_parts[0] if date_parts and date_parts[0] else "б. г."
+
+            abstract = re.sub(r'<[^>]+>', '', item.get("abstract", "") or "").strip()
+            if not abstract and n < 4 and doi:
+                abstract = fetch_abstract_from_openalex(doi)
+                time.sleep(0.3)
+
+            if abstract:
+                summary = (abstract[:1500] + '...') if len(abstract) > 1500 else abstract
+            else:
+                summary = f"Научная статья в журнале {source_name}. Тема: {title}. Авторы: {authors_str}. Год: {year}."
+
+            summary += f" | Авторы: {authors_str}. Источник: {source_name}, {year}."
+
+            news_list.append({
+                'title': title,
+                'summary': summary,
+                'link': link,
+                'source': source_name,
+                'feed_url': f"crossref:{issn}",
+            })
+        return news_list
+    except Exception as e:
+        print(f"⚠️ Ошибка Crossref: {e}")
+        return []
+
+def get_news_from_pubmed(query, max_items=8):
+    """PubMed E-utilities — золотой стандарт медицинской литературы."""
+    try:
+        url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
+        params = {
+            "db": "pubmed",
+            "term": f"({query}) AND (free full text[SB] OR open access[Filter])",
+            "retmax": max_items,
+            "sort": "pub_date",
+            "retmode": "json",
+            "email": CONTACT_EMAIL,
+        }
+        headers = {"User-Agent": f"CosmetologyNewsBot/1.0 (mailto:{CONTACT_EMAIL})"}
+        
+        resp = requests.get(url, params=params, headers=headers, timeout=15)
+        if resp.status_code != 200:
+            print(f"⚠️ PubMed вернул статус {resp.status_code}")
+            return []
+        
+        ids = resp.json().get("esearchresult", {}).get("idlist", [])
+        if not ids:
+            print("🔍 PubMed: найдено 0 записей")
+            return []
+        
+        url_summ = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
+        params_summ = {
+            "db": "pubmed",
+            "id": ",".join(ids),
+            "retmode": "json",
+            "email": CONTACT_EMAIL,
+        }
+        resp2 = requests.get(url_summ, params=params_summ, headers=headers, timeout=15)
+        if resp2.status_code != 200:
+            return []
+        
+        docs = resp2.json().get("result", {})
+        print(f"🔍 PubMed: найдено {len(ids)} записей")
+        
+        news_list = []
+        for pmid in ids:
+            doc = docs.get(pmid, {})
+            if not doc:
+                continue
+            title = doc.get("title", "")
+            if not title:
+                continue
+            authors = ", ".join(a.get("name", "") for a in doc.get("authors", [])[:3]) or "не указаны"
+            pubdate = doc.get("pubdate", "")
+            link = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
+            summary = f"Научная статья в PubMed. PMID: {pmid}. Авторы: {authors}. Опубликовано: {pubdate}."
+            
+            news_list.append({
+                'title': title,
+                'summary': summary,
+                'link': link,
+                'source': 'PubMed',
+                'feed_url': 'pubmed:dermatology',
+            })
+        return news_list
+    except Exception as e:
+        print(f"⚠️ Ошибка PubMed: {e}")
+        return []
+
+def get_news_from_semantic_scholar(query, max_items=6):
+    """Semantic Scholar — AI-поиск по научным статьям с TLDR."""
+    try:
+        url = "https://api.semanticscholar.org/graph/v1/paper/search"
+        params = {
+            "query": query,
+            "limit": max_items,
+            "fields": "title,abstract,authors,year,url,tldr,externalIds",
+            "year": "2024-2026",
+        }
+        headers = {"User-Agent": f"CosmetologyNewsBot/1.0 (mailto:{CONTACT_EMAIL})"}
+        
+        resp = requests.get(url, params=params, headers=headers, timeout=15)
+        if resp.status_code == 429:
+            print("⚠️ Semantic Scholar: rate limit, пропуск")
+            return []
+        if resp.status_code != 200:
+            print(f"⚠️ Semantic Scholar вернул статус {resp.status_code}")
+            return []
+        
+        items = resp.json().get("data", [])
+        print(f"🔍 Semantic Scholar: найдено {len(items)} записей")
+        
+        news_list = []
+        for item in items:
+            title = item.get("title", "")
+            if not title:
+                continue
+            
+            abstract = item.get("abstract") or ""
+            tldr = item.get("tldr", {}).get("text", "") if item.get("tldr") else ""
+            
+            authors = ", ".join(a.get("name", "") for a in (item.get("authors") or [])[:3]) or "не указаны"
+            year = item.get("year", "")
+            
+            doi = item.get("externalIds", {}).get("DOI")
+            link = f"https://doi.org/{doi}" if doi else (item.get("url") or "")
+            
+            summary = tldr or abstract or f"Научная статья. Авторы: {authors}. Год: {year}."
+            summary = (summary[:1500] + '...') if len(summary) > 1500 else summary
+            summary += f" | Авторы: {authors}. Год: {year}."
+            
+            news_list.append({
+                'title': title,
+                'summary': summary,
+                'link': link,
+                'source': 'Semantic Scholar',
+                'feed_url': 'semanticscholar:dermatology',
+            })
+        return news_list
+    except Exception as e:
+        print(f"⚠️ Ошибка Semantic Scholar: {e}")
+        return []
+
+def get_news_from_medrxiv(max_items=10):
+    """medRxiv — свежие медицинские препринты."""
+    try:
+        end_date = datetime.now().strftime("%Y-%m-%d")
+        start_date = (datetime.now() - timedelta(days=14)).strftime("%Y-%m-%d")
+        
+        url = f"https://api.medrxiv.org/details/medrxiv/{start_date}/{end_date}/0"
+        resp = requests.get(url, timeout=20)
+        if resp.status_code != 200:
+            print(f"⚠️ medRxiv вернул статус {resp.status_code}")
+            return []
+        
+        items = resp.json().get("collection", [])
+        print(f"🔍 medRxiv: получено {len(items)} препринтов")
+        
+        news_list = []
+        skin_keywords = ['skin', 'dermat', 'cosmetic', 'aesthetic', 'acne', 
+                        'psoriasis', 'eczema', 'hair', 'pigment', 'laser',
+                        'vitiligo', 'melanoma', 'rosacea']
+        
+        for item in items[:max_items * 3]:
+            title = item.get("title", "")
+            if not title:
+                continue
+            
+            category = item.get("category", "").lower()
+            abstract = item.get("abstract", "") or ""
+            combined = (title + " " + abstract + " " + category).lower()
+            
+            if not any(kw in combined for kw in skin_keywords):
+                continue
+            
+            doi = item.get("doi", "")
+            link = f"https://doi.org/{doi}" if doi else ""
+            authors = item.get("authors", "не указаны")
+            pub_date = item.get("date", "")
+            
+            summary = (abstract[:1500] + '...') if len(abstract) > 1500 else abstract
+            summary += f" | Авторы: {authors}. Препринт: {pub_date}."
+            
+            news_list.append({
+                'title': f"[Препринт] {title}",
+                'summary': summary,
+                'link': link,
+                'source': 'medRxiv',
+                'feed_url': 'medrxiv:dermatology',
+            })
+            
+            if len(news_list) >= max_items:
+                break
+        
+        print(f"🔍 medRxiv после фильтра по теме: {len(news_list)} записей")
+        return news_list
+    except Exception as e:
+        print(f"⚠️ Ошибка medRxiv: {e}")
+        return []
+
+def get_news_from_europepmc(query, max_items=6):
+    """Europe PMC — европейский аналог PubMed."""
+    try:
+        url = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
+        params = {
+            "query": query,
+            "format": "json",
+            "resultType": "core",
+            "pageSize": max_items,
+            "sort": "FIRST_PDATE desc",
+            "cursorMark": "*",
+        }
+        headers = {"User-Agent": f"CosmetologyNewsBot/1.0 (mailto:{CONTACT_EMAIL})"}
+        
+        resp = requests.get(url, params=params, headers=headers, timeout=15)
+        if resp.status_code != 200:
+            print(f"⚠️ Europe PMC вернул статус {resp.status_code}")
+            return []
+        
+        items = resp.json().get("resultList", {}).get("result", [])
+        print(f"🔍 Europe PMC: найдено {len(items)} записей")
+        
+        news_list = []
+        for item in items:
+            title = item.get("title", "")
+            if not title:
+                continue
+            
+            abstract = item.get("abstractText", "")
+            authors = ", ".join(a.get("fullName", "") for a in (item.get("authorList", {}).get("author", [])[:3])) or "не указаны"
+            year = item.get("pubYear", "")
+            
+            pmid = item.get("pmid")
+            doi = item.get("doi")
+            link = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/" if pmid else (f"https://doi.org/{doi}" if doi else "")
+            
+            summary = (abstract[:1500] + '...') if len(abstract) > 1500 else abstract
+            if not summary:
+                summary = f"Научная статья. Авторы: {authors}. Год: {year}."
+            summary += f" | Авторы: {authors}. Год: {year}."
+            
+            news_list.append({
+                'title': title,
+                'summary': summary,
+                'link': link,
+                'source': 'Europe PMC',
+                'feed_url': 'europepmc:dermatology',
+            })
+        return news_list
+    except Exception as e:
+        print(f"⚠️ Ошибка Europe PMC: {e}")
+        return []
+
+# ========== СБОР ПО КАТЕГОРИИ ==========
 def get_all_news_from_category(feeds, start_index):
+    """Round-robin обход всех источников категории."""
     num_feeds = len(feeds)
     if num_feeds == 0:
         return [], 0
@@ -169,8 +493,28 @@ def get_all_news_from_category(feeds, start_index):
     all_news = []
     for i in range(num_feeds):
         idx = (start_index + i) % num_feeds
-        print(f"📡 Проверяем источник #{idx+1}: {feeds[idx]}")
-        news = get_news_from_rss(feeds[idx], max_items=10)
+        feed = feeds[idx]
+        print(f"📡 Проверяем источник #{idx+1}: {feed}")
+        
+        if feed.startswith('crossref:'):
+            parts = feed.split(':', 2)
+            issn = parts[1]
+            query = parts[2] if len(parts) > 2 else "dermatology OR skin"
+            news = get_news_from_crossref(issn, query, max_items=6)
+        elif feed.startswith('pubmed:'):
+            query = feed.split(':', 1)[1]
+            news = get_news_from_pubmed(query, max_items=8)
+        elif feed.startswith('semanticscholar:'):
+            query = feed.split(':', 1)[1]
+            news = get_news_from_semantic_scholar(query, max_items=6)
+        elif feed == 'medrxiv':
+            news = get_news_from_medrxiv(max_items=6)
+        elif feed.startswith('europepmc:'):
+            query = feed.split(':', 1)[1]
+            news = get_news_from_europepmc(query, max_items=6)
+        else:
+            news = get_news_from_rss(feed, max_items=10)
+        
         all_news.extend(news)
         time.sleep(0.5)
 
@@ -185,7 +529,7 @@ def is_relevant(news_item):
     text = (news_item['title'] + ' ' + news_item['summary']).lower()
     return any(kw in text for kw in RELEVANT_KEYWORDS)
 
-# ========== ПРОМПТ 1: САЙТЫ ==========
+# ========== ПРОМПТ 1: САЙТЫ / НАУЧНЫЕ API ==========
 def process_site_news(news_item):
     prompt = f"""Ты — нейтральный научный обозреватель Telegram-канала о косметологии и доказательной медицине.
 ИСТОЧНИК: {news_item['source']}
@@ -209,14 +553,14 @@ def process_site_news(news_item):
 
 ⛔ ЗАПРЕЩЕНО:
 - Первое лицо: «мы», «я», «у нас», «наш», «в нашей практике». Пиши БЕЗЛИЧНО: «применяется», «используется», «врачи отмечают», «исследование показывает».
-- Конкретные клиники, врачи, бренды оборудования и препаратов. Коммерческие названия (Endolift, LASEMAR, i-PRF, Juvederm, Botox, Morpheus8) заменяй на общие термины: «диодный лазер 1470 нм», «PRF-терапия», «ботулотоксин типа А», «гиалуроновый филлер».
+- Конкретные клиники, врачи, бренды оборудования и препаратов. Коммерческие названия (Endolift, LASEMAR, i-PRF, Juvederm, Botox, Morpheus8, Dupixent) заменяй на общие термины: «диодный лазер 1470 нм», «PRF-терапия», «ботулотоксин типа А», «гиалуроновый филлер», «ингибитор интерлейкинов IL-4/IL-13».
 - Призывы: «обсудите с врачом», «запишитесь», «ваша кожа заслуживает».
 - Текст — НЕЙТРАЛЬНЫЙ информационный обзор, НЕ авторская колонка клиники.
 
 ПРАВИЛА:
 - Живой язык, без канцеляризмов
 - 1-2 тематических эмодзи (🔬 💉 🧬 🌿 📊)
-- Научная точность, не выдумывай факты
+- Научная точность, не выдумывай факты. Если текста мало — пиши короткий пост, не сочиняй детали.
 
 ОТВЕТЬ ТОЛЬКО готовым постом в указанном формате. Без комментариев."""
     try:
@@ -334,6 +678,7 @@ def main():
     print(f"📂 Последний источник: {last_source.upper()}")
     print(f"📊 Индексы: сайты={site_index}, телеграм={tg_index}\n")
 
+    # Определяем приоритет и запасной источник
     if last_source == 'site':
         priority_source = 'tg'
         priority_feeds = TG_FEEDS
@@ -349,12 +694,14 @@ def main():
         fallback_feeds = TG_FEEDS
         fallback_index = tg_index
 
+    # ШАГ 1: Приоритетная категория
     print(f"📰 Приоритет: {priority_source.upper()} ({len(priority_feeds)} источников)")
     unique_news, priority_next_index = collect_and_filter(priority_feeds, priority_index, posted_links, posted_titles)
 
     current_source = priority_source
     next_index = priority_next_index
 
+    # ШАГ 2: Fallback, если в приоритетной нет новостей
     if not unique_news:
         print(f"\n⚠️ В {priority_source.upper()} нет новых новостей. Пробуем запасной источник...")
         print(f"📰 Запасной: {fallback_source.upper()} ({len(fallback_feeds)} источников)")
@@ -370,16 +717,18 @@ def main():
             save_memory(memory)
             return
 
+    # Берем первую подходящую новость
     news_item = unique_news[0]
     print(f"\n📝 Выбираем: {news_item['title'][:60]}...")
     print(f"📡 Источник: {news_item['source']}")
     print(f"📂 Категория: {current_source.upper()}\n")
 
+    # Обработка через Groq
     if is_from_telegram(news_item['feed_url']):
         print("→ Промпт: TELEGRAM (рерайт + антиреклама + обезличивание)")
         post_text = process_tg_news(news_item)
     else:
-        print("→ Промпт: САЙТ (перевод + нейтральный обзор)")
+        print("→ Промпт: САЙТ/НАУЧНЫЙ (перевод + нейтральный обзор)")
         post_text = process_site_news(news_item)
 
     if not post_text:
@@ -395,12 +744,14 @@ def main():
         save_memory(memory)
         return
 
+    # Очистка и форматирование
     post_text = format_post(clean_post_text(post_text))
 
     print("\n--- ГОТОВЫЙ ПОСТ (после очистки и форматирования) ---")
     print(post_text)
     print("--------------------\n")
 
+    # Публикация
     if post_to_telegram(post_text):
         print(f"🎉 Успешно опубликовано!")
 
@@ -414,6 +765,7 @@ def main():
         else:
             memory['tg_index'] = next_index
 
+        # Чередование: меняем приоритет только если опубликовали из приоритетной категории
         if current_source == priority_source:
             memory['last_source'] = current_source
 
