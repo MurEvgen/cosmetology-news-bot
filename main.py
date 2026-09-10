@@ -24,7 +24,7 @@ SITE_FEEDS = [
     'https://www.bosa.co.kr/rss/allArticle.xml',
     'https://m.koreaherald.com/rss/newsAll',
     'https://en.yna.co.kr/RSS/news.xml',
-    'http://www.chinadaily.com.cn/rss/lifestyle_rss.xml',
+    # ❌ Убран China Daily (404)
     'https://www.scmp.com/rss/2/feed',
     'https://weekly.chinacdc.cn/rss/current.xml',
     'https://nplus1.ru/rss',
@@ -109,7 +109,7 @@ NEGATIVE_KEYWORDS = [
     'строительство дороги', 'железная дорога',
 ]
 
-# КОНТЕКСТНЫЕ ПАРЫ (для двусмысленных слов требуют медицинского контекста)
+# КОНТЕКСТНЫЕ ПАРЫ
 CONTEXT_PAIRS = {
     'laser': ['dermatology', 'skin', 'cosmetic', 'aesthetic procedure',
               'treatment', 'therapy', 'surgery', 'hair removal', 'resurfacing',
@@ -130,10 +130,22 @@ CONTEXT_PAIRS = {
                 'клеточная культура', 'тканевая культура', 'культура клеток'],
 }
 
-# Источники, требующие строгой фильтрации
 GENERAL_NEWS_SOURCES = ['scmp', 'china daily', 'korea herald', 'yonhap',
                         'nplus1', 'elementy', 'scientific russia']
 CULTURE_RISK_SOURCES = ['korea herald', 'yonhap', 'china daily', 'scmp']
+
+# 🎯 СПЕЦИАЛИЗИРОВАННЫЕ источники (слабый фильтр — они УЖЕ по теме)
+SPECIALIZED_SOURCES = [
+    'healio',              # профильный дерматологический портал
+    'sciencedaily',        # раздел skin_care уже по теме
+    'skin care news',      # ScienceDaily skin care
+    'forum kosmetolog',    # TG
+    'дневник дерматовен',  # TG
+    'чат косметолог',      # TG
+    'косметология inside', # TG
+    'dermatolog',          # TG
+    'kosmetolog',          # TG
+]
 
 # ========== ПАМЯТЬ ==========
 def load_memory():
@@ -170,17 +182,14 @@ def normalize_title(title):
 
 # ========== 📅 ПАРСИНГ ДАТ ==========
 def parse_publication_date(news_item):
-    """Извлекает дату публикации и определяет, будущая ли она."""
     text = (news_item.get('summary', '') + ' ' + news_item.get('title', '')).lower()
     current_year = datetime.now().year
-
     year_patterns = [
         r'\b(20\d{2})\b',
         r'published[:\s]+.*?(\d{4})',
         r'epub[:\s]+.*?(\d{4})',
         r'in press.*?(\d{4})',
     ]
-
     for pattern in year_patterns:
         matches = re.findall(pattern, text)
         for match in matches:
@@ -195,7 +204,6 @@ def parse_publication_date(news_item):
                     }
             except ValueError:
                 continue
-
     return {'year': None, 'is_future': False, 'status': 'дата не указана'}
 
 # ========== 🛡️ ОЧИСТКА ==========
@@ -509,8 +517,11 @@ def get_news_from_europepmc(query, max_items=6):
     try:
         url = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
         params = {
-            "query": query, "format": "json", "resultType": "core",
-            "pageSize": max_items, "sort": "FIRST_PDATE desc", "cursorMark": "*",
+            "query": f"({query}) AND (OPEN_ACCESS:y OR FIRST_PDATE:[NOW-90DAYS TO NOW])",
+            "format": "json",
+            "resultType": "core",
+            "pageSize": max_items,
+            "sort": "FIRST_PDATE desc",
         }
         headers = {"User-Agent": f"CosmetologyNewsBot/1.0 (mailto:{CONTACT_EMAIL})"}
         resp = requests.get(url, params=params, headers=headers, timeout=15)
@@ -567,39 +578,44 @@ def fetch_from_feed(feed):
 def is_from_telegram(feed_url):
     return 'tg.i-c-a.su' in feed_url or 'rsshub.app/telegram' in feed_url
 
+def is_specialized_source(source):
+    """Проверяет, является ли источник специализированным (не требует строгой проверки)."""
+    source_lower = source.lower()
+    return any(spec in source_lower for spec in SPECIALIZED_SOURCES)
+
 def is_general_news_source(source):
     source_lower = source.lower()
     return any(gen in source_lower for gen in GENERAL_NEWS_SOURCES)
 
-def has_negative_keywords(text):
-    text_lower = text.lower()
-    return any(neg in text_lower for neg in NEGATIVE_KEYWORDS)
-
-def has_context_match(text):
-    text_lower = text.lower()
-    for base_word, context_words in CONTEXT_PAIRS.items():
-        if base_word in text_lower:
-            if any(ctx in text_lower for ctx in context_words):
-                return True
-            else:
-                return False
-    return True
-
 def is_relevant(news_item):
-    title = news_item['title'].lower()
-    summary = news_item.get('summary', '').lower()
-    text = title + ' ' + summary
+    """Улучшенная проверка релевантности с детальным логированием."""
+    title = news_item['title']
+    title_lower = title.lower()
+    summary_lower = news_item.get('summary', '').lower()
+    text = title_lower + ' ' + summary_lower
     source = news_item.get('source', '').lower()
+
+    # 🎯 Для специализированных источников — мягкая проверка (только негативные слова)
+    if is_specialized_source(source):
+        for neg in NEGATIVE_KEYWORDS:
+            if neg.lower() in text:
+                print(f"   ❌ [SPEC] Отсеяно (негативное слово '{neg}'): {title[:50]}")
+                return False
+        # Для специализированных — этого достаточно, они УЖЕ по теме
+        return True
+
+    # 🔍 Для остальных источников — полная проверка
 
     # 1. ЖЁСТКИЙ фильтр по негативным словам
     for neg in NEGATIVE_KEYWORDS:
         if neg.lower() in text:
-            print(f"   ❌ Отсеяно (негативное слово '{neg}'): {news_item['title'][:50]}")
+            print(f"   ❌ Отсеяно (негативное слово '{neg}'): {title[:50]}")
             return False
 
     # 2. Проверяем наличие релевантных ключевых слов
     has_keyword = any(kw in text for kw in RELEVANT_KEYWORDS)
     if not has_keyword:
+        print(f"   ❌ Отсеяно (нет ключевых слов): {title[:50]}")
         return False
 
     # 3. Для источников с культурным риском — ДВОЙНАЯ проверка
@@ -611,10 +627,10 @@ def is_relevant(news_item):
             if base_word in text:
                 has_medical_context = any(ctx in text for ctx in context_words)
                 if not has_medical_context:
-                    print(f"   ❌ Отсеяно (нет мед. контекста для '{base_word}'): {news_item['title'][:50]}")
+                    print(f"   ❌ Отсеяно (нет мед. контекста для '{base_word}'): {title[:50]}")
                     return False
 
-        medical_in_title = any(kw in title for kw in [
+        medical_in_title = any(kw in title_lower for kw in [
             'skin', 'dermatology', 'cosmetic', 'aesthetic medicine',
             'acne', 'psoriasis', 'eczema', 'laser treatment',
             'botox', 'filler', 'rejuvenation', 'skincare',
@@ -622,7 +638,7 @@ def is_relevant(news_item):
             '피부', '피부과', '성형', '皮肤', '医美',
         ])
         if not medical_in_title and is_culture_risk:
-            print(f"   ❌ Отсеяно (нет мед. слов в заголовке): {news_item['title'][:50]}")
+            print(f"   ❌ Отсеяно (нет мед. слов в заголовке): {title[:50]}")
             return False
 
     return True
@@ -648,16 +664,26 @@ def find_news_in_category(cat, memory, posted_links, posted_titles):
         print(f"   📡 [{cat.upper()}] источник #{idx+1}/{n}: {feed}")
         news = fetch_from_feed(feed)
 
+        # 🎯 Адаптивная задержка: больше для API, меньше для RSS
+        if any(prefix in feed for prefix in ['crossref:', 'pubmed:', 'semanticscholar:', 'europepmc:']):
+            time.sleep(2.0)
+        elif feed == 'medrxiv':
+            time.sleep(1.5)
+        else:
+            time.sleep(0.5)
+
         for item in news:
+            # Проверка дубликатов с детальным логом
             if item['link'] in posted_links:
+                print(f"   ⏭ Пропуск (дубликат ссылки): {item['title'][:50]}")
                 continue
             if normalize_title(item['title']) in posted_titles:
+                print(f"   ⏭ Пропуск (дубликат заголовка): {item['title'][:50]}")
                 continue
             if not is_relevant(item):
                 continue
             print(f"   ✅ Найдена новость: {item['title'][:60]}")
             return item, (idx + 1) % n
-        time.sleep(0.3)
 
     print(f"   ❌ В категории {cat.upper()} новостей нет")
     return None, (start + 1) % n
@@ -706,7 +732,7 @@ def process_site_news(news_item):
 
 ПРАВИЛА:
 - Живой язык, без канцеляризмов
-- 1-2 тематических эмодзи (🔬 💉  🌿 📊)
+- 1-2 тематических эмодзи (🔬 💉 🧬 🌿 📊)
 - Научная точность, не выдумывай факты. Если текста мало — пиши короткий пост, не сочиняй детали.
 
 ОТВЕТЬ ТОЛЬКО готовым постом в указанном формате. Без комментариев."""
@@ -755,7 +781,7 @@ def process_tg_news(news_item):
 
 ПРАВИЛА:
 - Живой язык, без канцеляризмов
-- 1-2 тематических эмодзи (🔬 💉  🌿 📊)
+- 1-2 тематических эмодзи (🔬 💉 🧬 🌿 📊)
 - НЕ копируй дословно, переписывай своими словами
 - НЕ упоминай источник, НЕ добавляй ссылки
 
