@@ -48,7 +48,6 @@ TG_FEEDS = [
 CATEGORIES = ['site', 'science', 'tg']
 
 # ========== ✅ БЕЛЫЙ СПИСОК (проходные слова нашей темы) ==========
-# Новость проходит, только если содержит хотя бы одно из этих слов
 WHITELIST_KEYWORDS = [
     # 🧴 ЗАБОЛЕВАНИЯ КОЖИ (EN)
     'acne', 'pimples', 'blackheads', 'comedone',
@@ -199,21 +198,38 @@ WHITELIST_KEYWORDS = [
 
 # ========== ❌ НЕГАТИВНЫЙ СПИСОК (отсеивает чужие темы) ==========
 NEGATIVE_KEYWORDS = [
+    # 🚀 ВОЕННАЯ / ОБОРОННАЯ ТЕМАТИКА (ГЛАВНАЯ ЗАЩИТА!)
+    'missile', 'rocket', 'weapon', 'military', 'defense', 'defence',
+    'aerospace', 'army', 'navy', 'air force', 'armed forces',
+    'artillery', 'tank', 'fighter jet', 'warship', 'submarine',
+    'nuclear weapon', 'arms deal', 'arms export', 'defense contract',
+    'munition', 'ammunition', 'warfare', 'combat',
+    'ракет', 'оружие', 'военн', 'оборон', 'вооружен',
+    'армия', 'флот', 'артиллери', 'танк', 'истребитель',
+    'подводная лодка', 'корабль', 'ядерн', 'ополчен',
+    'боеприпас', 'боеголов', 'вооружение', 'оборонительн',
+    'hanwha', 'chunmoo', 'chunmu', 'k2 tank', 'kf-21', 'k9 howitzer',
+    'ханва', 'чунму',
+    
     # 🚬 Табак
     'cigarette', 'tobacco', 'smoking', 'vaping', 'e-cigarette',
     'сигарет', 'табак', 'курение', 'вейп',
+    
     # ⚡ Энергетика/промышленность
     'power plant', 'energy equipment', 'nuclear', 'coal mine',
     'энергетическое оборудование', 'электростанция', 'атомная энергетика',
+    
     # 🔬 Физика/оптика (НЕ медицинская)
     'physics conference', 'optics conference', 'laser physics', 'quantum optics',
     'photonics research', 'spectroscopy', 'laser beam', 'optical fiber',
     'конференция по физике', 'лазерная физика', 'квантовая оптика', 'фотоника',
     'оптике', 'оптика',
+    
     # 🏬 Ритейл/бизнес
     'retail store opening', 'fashion store', 'flagship store opening',
     'music platform', 'entertainment company', 'k-pop', 'idol group',
     'открытие магазина', 'флагманский магазин', 'музыкальная платформа',
+    
     # 📚 Литература/культура
     'writers festival', 'literary festival', 'book festival', 'poetry reading',
     'novel launch', 'author event', 'literary award', 'book fair',
@@ -221,23 +237,27 @@ NEGATIVE_KEYWORDS = [
     'сеульский фестиваль писателей', 'фестиваль писателей',
     'литературный фестиваль', 'книжная ярмарка', 'поэтический вечер',
     'писатель', 'поэт', 'романист', 'прозаик', 'литературн',
+    
     # 🎬 Кино/искусство
     'cultural context', 'historical drama', 'joseon dynasty', 'dynasty era',
     'movie premiere', 'film director', 'tv series', 'web drama',
     'историческая драма', 'династия чосон', 'кинопремьера', 'сериал',
     'культурный контекст', 'эпоха чосон',
+    
     # 📈 Политика/экономика
     'stock market', 'economic policy', 'trade war', 'inflation',
     'interest rate', 'currency exchange', 'gdp growth', 'stock exchange',
     'фондовый рынок', 'экономическая политика', 'торговая война', 'инфляция',
+    
     # 🎓 Образование
     'university ranking', 'school curriculum', 'student exam',
     'рейтинг университетов', 'школьная программа',
+    
     # 🚗 Транспорт/инфраструктура
     'highway construction', 'railway project', 'airport expansion',
     'строительство дороги', 'железная дорога',
     
-    # 🦴 РЕВМАТОЛОГИЯ / ОРТОПЕДИЯ (НОВОЕ — главная защита!)
+    # 🦴 РЕВМАТОЛОГИЯ / ОРТОПЕДИЯ
     'rheumatoid arthritis', 'rheumatoid', 'osteoarthritis', 'arthritis',
     'joint inflammation', 'autoimmune joint', 'synovial', 'synovitis',
     'ревматоидный артрит', 'ревматоид', 'остеоартр', 'артрит',
@@ -273,7 +293,6 @@ NEGATIVE_KEYWORDS = [
 ]
 
 # ========== КОНТЕКСТНЫЕ ПАРЫ ==========
-# Для двусмысленных слов требуют медицинского контекста
 CONTEXT_PAIRS = {
     'laser': ['dermatology', 'skin', 'cosmetic', 'aesthetic', 'treatment',
               'therapy', 'surgery', 'hair removal', 'resurfacing',
@@ -294,15 +313,32 @@ CONTEXT_PAIRS = {
 }
 
 # Источники, требующие строгой проверки
-GENERAL_NEWS_SOURCES = ['scmp', 'china daily', 'korea herald', 'yonhap',
-                        'nplus1', 'elementy', 'scientific russia']
-CULTURE_RISK_SOURCES = ['korea herald', 'yonhap', 'china daily', 'scmp']
+GENERAL_NEWS_SOURCES = [
+    'scmp', 'china daily', 'korea herald', 'yonhap',
+    'nplus1', 'elementy', 'scientific russia',
+    'bosa.co.kr', 'yna.co.kr',
+]
+CULTURE_RISK_SOURCES = [
+    'korea herald', 'yonhap', 'china daily', 'scmp',
+    'bosa.co.kr', 'yna.co.kr',
+]
 
-# 🎯 Специализированные источники (мягкий фильтр — они УЖЕ по теме)
+# 🎯 Специализированные источники (только профильные дерматологические/косметологические)
 SPECIALIZED_SOURCES = [
-    'healio', 'sciencedaily', 'skin care news',
-    'forum kosmetolog', 'дневник дерматовен', 'чат косметолог',
-    'косметология inside', 'dermatolog', 'kosmetolog',
+    'healio',              # профильный дерматологический портал
+    'sciencedaily',        # раздел skin_care уже по теме
+    'skin care news',      # ScienceDaily skin care
+    'forum kosmetolog',    # TG
+    'дневник дерматовен',  # TG
+    'чат косметолог',      # TG
+    'косметология inside', # TG
+    'dermatolog',          # TG
+    'kosmetolog',          # TG
+    'pubmed',              # медицинские статьи
+    'crossref',            # научные статьи
+    'semanticscholar',     # научные статьи
+    'europepmc',           # медицинские статьи
+    'medrxiv',             # медицинские препринты
 ]
 
 # ========== ПАМЯТЬ ==========
@@ -732,7 +768,7 @@ def fetch_from_feed(feed):
         return get_news_from_europepmc(feed.split(':', 1)[1])
     return get_news_from_rss(feed, max_items=10)
 
-# ========== 🎯 ФИЛЬТРАЦИЯ (белый список + негатив) ==========
+# ========== 🎯 ФИЛЬТРАЦИЯ ==========
 def is_from_telegram(feed_url):
     return 'tg.i-c-a.su' in feed_url or 'rsshub.app/telegram' in feed_url
 
@@ -742,9 +778,9 @@ def is_specialized_source(source):
 
 def is_relevant(news_item):
     """
-    Логика фильтрации:
+    Логика фильтрации (строгая):
     1. Негативные слова → отсев (защита от чужих тем)
-    2. Белый список → должно быть хотя бы одно проходное слово
+    2. Белый список → ОБЯЗАТЕЛЬНО должно быть хотя бы одно проходное слово
     3. Для общих источников → дополнительная проверка контекста
     """
     title = news_item['title']
@@ -759,7 +795,8 @@ def is_relevant(news_item):
             print(f"   ❌ Отсеяно (негативное слово '{neg}'): {title[:50]}")
             return False
 
-    # 2. ✅ БЕЛЫЙ СПИСОК: ищем хотя бы одно проходное слово
+    # 2. ✅ БЕЛЫЙ СПИСОК: ОБЯЗАТЕЛЬНО ищем хотя бы одно проходное слово
+    # ВАЖНО: проверяем ВСЕ источники, включая "специализированные"!
     matched_keyword = None
     for kw in WHITELIST_KEYWORDS:
         if kw.lower() in text:
@@ -767,10 +804,10 @@ def is_relevant(news_item):
             break
     
     if not matched_keyword:
-        print(f"   ❌ Отсеяно (нет проходных слов): {title[:50]}")
+        print(f"   ❌ Отсеяно (нет whitelist-слова): {title[:50]}")
         return False
     
-    print(f"   ✅ Прошло по белому списку ('{matched_keyword}'): {title[:50]}")
+    print(f"   ✅ Прошло по whitelist ('{matched_keyword}'): {title[:50]}")
     
     # 3. Для специализированных источников — этого достаточно
     if is_specialized_source(source):
