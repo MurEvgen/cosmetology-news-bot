@@ -17,7 +17,6 @@ MEMORY_FILE = "posted_news.json"
 groq_client = Groq(api_key=GROQ_API_KEY)
 
 # ========== КАТЕГОРИИ ИСТОЧНИКОВ ==========
-# Категория 1: САЙТЫ (RSS)
 SITE_FEEDS = [
     'https://www.sciencedaily.com/rss/health_medicine/skin_care.xml',
     'https://www.healio.com/rss/dermatology',
@@ -32,7 +31,6 @@ SITE_FEEDS = [
     'https://scientificrussia.ru/rss',
 ]
 
-# Категория 2: НАУКА (научные API)
 SCIENCE_FEEDS = [
     'crossref:0140-6736:skin OR dermatology OR cosmetic OR aesthetic OR acne OR psoriasis',
     'pubmed:dermatology OR cosmetic OR aesthetic OR skin OR botulinum OR filler',
@@ -41,7 +39,6 @@ SCIENCE_FEEDS = [
     'europepmc:dermatology OR cosmetic OR aesthetic OR skin',
 ]
 
-# Категория 3: TELEGRAM
 TG_FEEDS = [
     'https://tg.i-c-a.su/rss/chatkosmetologa',
     'https://tg.i-c-a.su/rss/d_dermatology',
@@ -51,22 +48,57 @@ TG_FEEDS = [
 
 CATEGORIES = ['site', 'science', 'tg']
 
+# ========== КЛЮЧЕВЫЕ СЛОВА (УЛУЧШЕННЫЕ) ==========
 RELEVANT_KEYWORDS = [
+    # Медицинские/косметологические
     'skin', 'dermatology', 'cosmetic', 'aesthetic', 'acne',
-    'collagen', 'wrinkle', 'peptide', 'exosome', 'laser',
+    'collagen', 'wrinkle', 'peptide', 'exosome', 'laser treatment',
     'psoriasis', 'eczema', 'melanoma', 'rosacea', 'pigment',
-    'botox', 'botulinum', 'filler', 'rejuvenation', 'aging',
-    'sunscreen', 'moisturizer', 'skincare', 'beauty',
-    'vitiligo', 'atopic', 'alopecia', 'dermatitis', 'pruritus',
+    'botox', 'botulinum', 'filler', 'rejuvenation', 'skin aging',
+    'sunscreen', 'moisturizer', 'skincare', 'dermatitis',
+    'vitiligo', 'atopic', 'alopecia', 'pruritus', 'dermatosis',
+    # Русские
     'кожа', 'косметолог', 'дерматолог', 'эстетическ', 'акне',
     'псориаз', 'морщины', 'коллаген', 'ботокс', 'филлер',
-    'пилинг', 'лазер', 'омоложение', 'дерматит', 'розацеа',
+    'пилинг', 'лазерная терапия', 'омоложение', 'дерматит', 'розацеа',
+    # Корейские
     '피부', '화장품', '뷰티', '미용', '성형', '피부과',
     '보톡스', '필러', '레이저', '콜라겐', '엑소좀', '여드름',
     '아토피', '탈모', '주름', '색소', '자외선',
-    '皮肤', '美容', '医美', '化妆品', '整形', '激光',
+    # Китайские
+    '皮肤', '美容', '医美', '化妆品', '整形', '激光治疗',
     '胶原', '痤疮', '湿疹', '护肤', '美白',
 ]
+
+# НЕГАТИВНЫЕ КЛЮЧЕВЫЕ СЛОВА (отсеивают нерелевантное)
+NEGATIVE_KEYWORDS = [
+    # Табак/сигареты
+    'cigarette', 'tobacco', 'smoking', 'vaping', 'сигарет', 'табак', 'курение',
+    # Энергетика/промышленность
+    'power plant', 'energy equipment', 'nuclear', 'coal mine', 'энергетическое оборудование',
+    # Физика/оптика (не медицинская)
+    'physics conference', 'optics conference', 'laser physics', 'quantum optics',
+    'конференция по физике', 'лазерная физика', 'квантовая оптика',
+    # Ритейл/бизнес (не косметология)
+    'retail store opening', 'fashion store', 'flagship store opening',
+    'открытие магазина', 'флагманский магазин',
+    # История/культура
+    'joseon dynasty', 'historical drama', 'cultural context',
+    'династия чосон', 'историческая драма', 'культурный контекст',
+    # Политика/экономика
+    'stock market', 'economic policy', 'trade war', 'inflation',
+    'фондовый рынок', 'экономическая политика', 'торговая война',
+]
+
+# КОНТЕКСТНЫЕ ПАРЫ (для общих источников)
+CONTEXT_PAIRS = {
+    'laser': ['dermatology', 'skin', 'cosmetic', 'aesthetic', 'treatment', 'therapy'],
+    'beauty': ['skincare', 'cosmetic', 'aesthetic', 'procedure', 'treatment'],
+    'store': ['cosmetic', 'beauty', 'skincare', 'dermatology'],
+}
+
+# Общие источники (требуют строгой фильтрации)
+GENERAL_NEWS_SOURCES = ['scmp', 'china daily', 'korea herald', 'yonhap']
 
 # ========== ПАМЯТЬ ==========
 def load_memory():
@@ -79,12 +111,12 @@ def load_memory():
         try:
             with open(MEMORY_FILE, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            if isinstance(data, list):  # старый формат
+            if isinstance(data, list):
                 data = {'posted_links': data}
             for k, v in default.items():
                 if k not in data:
                     data[k] = v
-            if data['next_category'] not in CATEGORIES:
+            if data.get('next_category') not in CATEGORIES:
                 data['next_category'] = 'site'
             return data
         except Exception:
@@ -100,6 +132,37 @@ def normalize_title(title):
     title = re.sub(r'[.!?\s]+$', '', title)
     title = re.sub(r'\s+', ' ', title)
     return title
+
+# ========== 📅 ПАРСИНГ ДАТ ==========
+def parse_publication_date(news_item):
+    """Извлекает дату публикации и определяет, будущая ли она."""
+    text = (news_item.get('summary', '') + ' ' + news_item.get('title', '')).lower()
+    current_year = datetime.now().year
+    
+    # Паттерны для поиска года
+    year_patterns = [
+        r'\b(20\d{2})\b',  # 20XX
+        r'published[:\s]+.*?(\d{4})',
+        r'epub[:\s]+.*?(\d{4})',
+        r'in press.*?(\d{4})',
+    ]
+    
+    for pattern in year_patterns:
+        matches = re.findall(pattern, text)
+        for match in matches:
+            try:
+                year = int(match)
+                if 2000 <= year <= 2100:  # Разумный диапазон
+                    is_future = year > current_year
+                    return {
+                        'year': year,
+                        'is_future': is_future,
+                        'status': 'препринт/в печати' if is_future else 'опубликовано'
+                    }
+            except ValueError:
+                continue
+    
+    return {'year': None, 'is_future': False, 'status': 'дата не указана'}
 
 # ========== 🛡️ ОЧИСТКА ОТ ИЕРОГЛИФОВ ==========
 def clean_post_text(text):
@@ -157,25 +220,29 @@ def clean_html(text):
 def get_news_from_rss(feed_url, max_items=10):
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             'Accept': 'application/rss+xml, application/xml, text/xml, */*'
         }
         feed = feedparser.parse(feed_url, request_headers=headers)
         source_title = feed.feed.get('title', 'Unknown')
-        status = getattr(feed, 'status', 'N/A')
-        print(f"   🔍 {source_title} (Status: {status}): записей {len(feed.entries)}")
+        print(f"   🔍 {source_title} (Status: {getattr(feed, 'status', 'N/A')}): записей {len(feed.entries)}")
 
         news_list = []
         for entry in feed.entries[:max_items]:
             raw = entry.get('summary', entry.get('description', ''))
             summary = clean_html(raw)
             summary = (summary[:1500] + '...') if len(summary) > 1500 else summary
+            
+            # Парсим дату публикации
+            date_info = parse_publication_date({'title': entry.title, 'summary': summary})
+            
             news_list.append({
                 'title': clean_html(entry.title),
                 'summary': summary,
                 'link': entry.link,
                 'source': source_title,
                 'feed_url': feed_url,
+                'date_info': date_info,
             })
         return news_list
     except Exception as e:
@@ -234,9 +301,13 @@ def get_news_from_crossref(issn, query, max_items=6):
                 if name:
                     authors.append(name)
             authors_str = ", ".join(authors) if authors else "не указаны"
+            
+            # Парсим дату из Crossref
             date_parts = item.get("published", {}).get("date-parts", [[None]])[0]
-            year = date_parts[0] if date_parts and date_parts[0] else "б. г."
-
+            year = date_parts[0] if date_parts and date_parts[0] else None
+            current_year = datetime.now().year
+            is_future = year and year > current_year
+            
             abstract = re.sub(r'<[^>]+>', '', item.get("abstract", "") or "").strip()
             if not abstract and n < 4 and doi:
                 abstract = fetch_abstract_from_openalex(doi)
@@ -245,12 +316,17 @@ def get_news_from_crossref(issn, query, max_items=6):
             if abstract:
                 summary = (abstract[:1500] + '...') if len(abstract) > 1500 else abstract
             else:
-                summary = f"Научная статья в журнале {source_name}. Тема: {title}. Авторы: {authors_str}. Год: {year}."
-            summary += f" | Авторы: {authors_str}. Источник: {source_name}, {year}."
+                summary = f"Научная статья в журнале {source_name}. Тема: {title}. Авторы: {authors_str}."
+            
+            summary += f" | Авторы: {authors_str}. Источник: {source_name}."
+            if year:
+                summary += f" Год: {year}."
 
             news_list.append({
                 'title': title, 'summary': summary, 'link': link,
                 'source': source_name, 'feed_url': f"crossref:{issn}",
+                'date_info': {'year': year, 'is_future': is_future, 
+                             'status': 'препринт/в печати' if is_future else 'опубликовано'}
             })
         return news_list
     except Exception as e:
@@ -291,11 +367,24 @@ def get_news_from_pubmed(query, max_items=8):
                 continue
             authors = ", ".join(a.get("name", "") for a in doc.get("authors", [])[:3]) or "не указаны"
             pubdate = doc.get("pubdate", "")
+            
+            # Парсим год из pubdate
+            year = None
+            is_future = False
+            if pubdate:
+                year_match = re.search(r'\b(20\d{2})\b', pubdate)
+                if year_match:
+                    year = int(year_match.group(1))
+                    is_future = year > datetime.now().year
+            
             summary = f"Научная статья в PubMed. PMID: {pmid}. Авторы: {authors}. Опубликовано: {pubdate}."
+            
             news_list.append({
                 'title': title, 'summary': summary,
                 'link': f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
                 'source': 'PubMed', 'feed_url': 'pubmed:dermatology',
+                'date_info': {'year': year, 'is_future': is_future,
+                             'status': 'препринт/в печати' if is_future else 'опубликовано'}
             })
         return news_list
     except Exception as e:
@@ -329,15 +418,20 @@ def get_news_from_semantic_scholar(query, max_items=6):
             abstract = item.get("abstract") or ""
             tldr = (item.get("tldr") or {}).get("text", "")
             authors = ", ".join(a.get("name", "") for a in (item.get("authors") or [])[:3]) or "не указаны"
-            year = item.get("year", "")
+            year = item.get("year")
+            is_future = year and year > datetime.now().year
+            
             doi = (item.get("externalIds") or {}).get("DOI")
             link = f"https://doi.org/{doi}" if doi else (item.get("url") or "")
             summary = tldr or abstract or f"Научная статья. Авторы: {authors}. Год: {year}."
             summary = (summary[:1500] + '...') if len(summary) > 1500 else summary
             summary += f" | Авторы: {authors}. Год: {year}."
+            
             news_list.append({
                 'title': title, 'summary': summary, 'link': link,
                 'source': 'Semantic Scholar', 'feed_url': 'semanticscholar:dermatology',
+                'date_info': {'year': year, 'is_future': is_future,
+                             'status': 'препринт/в печати' if is_future else 'опубликовано'}
             })
         return news_list
     except Exception as e:
@@ -357,7 +451,7 @@ def get_news_from_medrxiv(max_items=6):
         print(f"   🔍 medRxiv: препринтов {len(items)}")
 
         skin_keywords = ['skin', 'dermat', 'cosmetic', 'aesthetic', 'acne',
-                         'psoriasis', 'eczema', 'hair', 'pigment', 'laser',
+                         'psoriasis', 'eczema', 'hair', 'pigment', 'laser treatment',
                          'vitiligo', 'melanoma', 'rosacea']
         news_list = []
         for item in items[:max_items * 3]:
@@ -371,12 +465,22 @@ def get_news_from_medrxiv(max_items=6):
             abstract = item.get("abstract", "") or ""
             authors = item.get("authors", "не указаны")
             pub_date = item.get("date", "")
+            
+            # Все medRxiv - препринты
+            year = None
+            if pub_date:
+                year_match = re.search(r'\b(20\d{2})\b', pub_date)
+                if year_match:
+                    year = int(year_match.group(1))
+            
             summary = (abstract[:1500] + '...') if len(abstract) > 1500 else abstract
             summary += f" | Авторы: {authors}. Препринт: {pub_date}."
+            
             news_list.append({
                 'title': f"[Препринт] {title}", 'summary': summary,
                 'link': f"https://doi.org/{doi}" if doi else "",
                 'source': 'medRxiv', 'feed_url': 'medrxiv:dermatology',
+                'date_info': {'year': year, 'is_future': True, 'status': 'препринт'}
             })
             if len(news_list) >= max_items:
                 break
@@ -408,7 +512,10 @@ def get_news_from_europepmc(query, max_items=6):
                 continue
             abstract = item.get("abstractText", "")
             authors = ", ".join(a.get("fullName", "") for a in (item.get("authorList", {}).get("author", [])[:3])) or "не указаны"
-            year = item.get("pubYear", "")
+            year_str = item.get("pubYear", "")
+            year = int(year_str) if year_str and year_str.isdigit() else None
+            is_future = year and year > datetime.now().year
+            
             pmid = item.get("pmid")
             doi = item.get("doi")
             link = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/" if pmid else (f"https://doi.org/{doi}" if doi else "")
@@ -416,9 +523,12 @@ def get_news_from_europepmc(query, max_items=6):
             if not summary:
                 summary = f"Научная статья. Авторы: {authors}. Год: {year}."
             summary += f" | Авторы: {authors}. Год: {year}."
+            
             news_list.append({
                 'title': title, 'summary': summary, 'link': link,
                 'source': 'Europe PMC', 'feed_url': 'europepmc:dermatology',
+                'date_info': {'year': year, 'is_future': is_future,
+                             'status': 'препринт/в печати' if is_future else 'опубликовано'}
             })
         return news_list
     except Exception as e:
@@ -440,13 +550,55 @@ def fetch_from_feed(feed):
         return get_news_from_europepmc(feed.split(':', 1)[1])
     return get_news_from_rss(feed, max_items=10)
 
-# ========== ФИЛЬТРЫ ==========
+# ========== УЛУЧШЕННАЯ ФИЛЬТРАЦИЯ ==========
 def is_from_telegram(feed_url):
     return 'tg.i-c-a.su' in feed_url or 'rsshub.app/telegram' in feed_url
 
+def is_general_news_source(source):
+    """Проверяет, является ли источник общим новостным (не специализированным)."""
+    source_lower = source.lower()
+    return any(gen in source_lower for gen in GENERAL_NEWS_SOURCES)
+
+def has_negative_keywords(text):
+    """Проверяет наличие негативных ключевых слов."""
+    text_lower = text.lower()
+    return any(neg in text_lower for neg in NEGATIVE_KEYWORDS)
+
+def has_context_match(text):
+    """Проверяет, есть ли ключевое слово в правильном контексте."""
+    text_lower = text.lower()
+    
+    for base_word, context_words in CONTEXT_PAIRS.items():
+        if base_word in text_lower:
+            # Проверяем, есть ли хотя бы одно контекстное слово рядом
+            if any(ctx in text_lower for ctx in context_words):
+                return True
+            else:
+                # Слово есть, но не в нужном контексте
+                return False
+    return True  # Если нет специальных слов, пропускаем
+
 def is_relevant(news_item):
+    """Улучшенная проверка релевантности с учетом контекста."""
     text = (news_item['title'] + ' ' + news_item['summary']).lower()
-    return any(kw in text for kw in RELEVANT_KEYWORDS)
+    
+    # 1. Отсеиваем по негативным словам
+    if has_negative_keywords(text):
+        print(f"   ❌ Отсеяно (негативные слова): {news_item['title'][:50]}")
+        return False
+    
+    # 2. Проверяем наличие релевантных ключевых слов
+    has_keyword = any(kw in text for kw in RELEVANT_KEYWORDS)
+    if not has_keyword:
+        return False
+    
+    # 3. Для общих источников - строгая проверка контекста
+    if is_general_news_source(news_item['source']):
+        if not has_context_match(text):
+            print(f"   ❌ Отсеяно (нет контекста): {news_item['title'][:50]}")
+            return False
+    
+    return True
 
 def get_feeds_for_category(cat):
     if cat == 'site':
@@ -455,12 +607,8 @@ def get_feeds_for_category(cat):
         return SCIENCE_FEEDS
     return TG_FEEDS
 
-# ========== ПОИСК НОВОСТИ В КАТЕГОРИИ (round-robin) ==========
+# ========== ПОИСК НОВОСТИ В КАТЕГОРИИ ==========
 def find_news_in_category(cat, memory, posted_links, posted_titles):
-    """
-    Проходит источники категории по кругу, начиная с указателя.
-    Возвращает (новость, новый_указатель). Если ничего нет — (None, указатель+1).
-    """
     feeds = get_feeds_for_category(cat)
     n = len(feeds)
     if n == 0:
@@ -481,19 +629,34 @@ def find_news_in_category(cat, memory, posted_links, posted_titles):
             if not is_relevant(item):
                 continue
             print(f"   ✅ Найдена новость: {item['title'][:60]}")
-            return item, (idx + 1) % n  # сдвигаем указатель на следующий источник
+            return item, (idx + 1) % n
         time.sleep(0.3)
 
     print(f"   ❌ В категории {cat.upper()} новостей нет")
-    return None, (start + 1) % n  # сдвигаем, чтобы не проверять тот же источник вечно
+    return None, (start + 1) % n
 
-# ========== ПРОМПТ 1: САЙТЫ / НАУКА ==========
+# ========== ПРОМПТ 1: САЙТЫ / НАУКА (С ИСПРАВЛЕНИЕМ ДАТ) ==========
 def process_site_news(news_item):
+    date_info = news_item.get('date_info', {})
+    year = date_info.get('year')
+    is_future = date_info.get('is_future', False)
+    
+    # Формируем подсказку по дате для модели
+    date_hint = ""
+    if year and is_future:
+        date_hint = f"""
+⚠️ ВАЖНО — ДАТА ПУБЛИКАЦИИ:
+В тексте указан {year} год, но сейчас {datetime.now().year} год. Это означает, что статья является ПРЕПРИНТОМ или находится "в печати" (еще не опубликована).
+- Пиши: "исследование планируется к публикации в {year} году" или "работа находится в стадии препринта"
+- НЕ пиши "опубликовано в {year} году" как свершившийся факт
+- Используй формулировки: "ожидается публикация", "в печати", "предварительные результаты"
+"""
+    
     prompt = f"""Ты — нейтральный научный обозреватель Telegram-канала о косметологии и доказательной медицине.
 ИСТОЧНИК: {news_item['source']}
 ОРИГИНАЛЬНЫЙ ЗАГОЛОВОК: {news_item['title']}
 ТЕКСТ: {news_item['summary']}
-
+{date_hint}
 ВАЖНО — ЯЗЫК:
 - Текст может быть на английском, корейском или китайском языке.
 - Пиши пост ИСКЛЮЧИТЕЛЬНО НА РУССКОМ.
@@ -525,7 +688,7 @@ def process_site_news(news_item):
         resp = groq_client.chat.completions.create(
             model="qwen/qwen3.8-27b",
             messages=[
-                {"role": "system", "content": "Ты нейтральный научный обозреватель. Пиши ТОЛЬКО на русском, БЕЗ иероглифов. Никаких «мы», брендов и призывов. Строго соблюдай пустые строки между заголовком, текстом и хэштегами."},
+                {"role": "system", "content": "Ты нейтральный научный обозреватель. Пиши ТОЛЬКО на русском, БЕЗ иероглифов. Никаких «мы», брендов и призывов. Строго соблюдай пустые строки между заголовком, текстом и хэштегами. Если дата в будущем — указывай что это препринт."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.6,
@@ -623,12 +786,11 @@ def main():
     chosen_item = None
     chosen_cat = None
 
-    # Проходим до 3 категорий подряд, пока не найдём новость
     for step in range(3):
         cat = CATEGORIES[(start_pos + step) % 3]
         print(f"📰 Проверяем категорию: {cat.upper()}")
         item, new_index = find_news_in_category(cat, memory, posted_links, posted_titles)
-        memory[f'{cat}_index'] = new_index  # сохраняем указатель категории
+        memory[f'{cat}_index'] = new_index
         if item:
             chosen_item = item
             chosen_cat = cat
@@ -643,9 +805,13 @@ def main():
 
     print(f"\n📝 Выбираем: {chosen_item['title'][:60]}...")
     print(f"📡 Источник: {chosen_item['source']}")
-    print(f"📂 Категория: {chosen_cat.upper()}\n")
+    print(f"📂 Категория: {chosen_cat.upper()}")
+    if 'date_info' in chosen_item:
+        di = chosen_item['date_info']
+        if di.get('year'):
+            print(f"📅 Год: {di['year']} ({di['status']})")
+    print()
 
-    # Обработка через Groq
     if chosen_cat == 'tg':
         print("→ Промпт: TELEGRAM (рерайт + антиреклама + обезличивание)")
         post_text = process_tg_news(chosen_item)
@@ -659,7 +825,7 @@ def main():
         posted_titles.append(normalize_title(chosen_item['title']))
         memory['posted_links'] = posted_links[-1000:]
         memory['posted_titles'] = posted_titles[-1000:]
-        memory['next_category'] = chosen_cat  # в следующий час пробуем ту же категорию
+        memory['next_category'] = chosen_cat
         save_memory(memory)
         return
 
@@ -677,7 +843,6 @@ def main():
         memory['posted_links'] = posted_links[-1000:]
         memory['posted_titles'] = posted_titles[-1000:]
 
-        # Следующий запуск — следующая категория по кругу
         memory['next_category'] = CATEGORIES[(CATEGORIES.index(chosen_cat) + 1) % 3]
 
         save_memory(memory)
@@ -686,7 +851,7 @@ def main():
         print(f"📌 Указатели: сайт=#{memory['site_index']+1}, наука=#{memory['science_index']+1}, тг=#{memory['tg_index']+1}")
     else:
         print("❌ Не удалось опубликовать.")
-        memory['next_category'] = chosen_cat  # повторим ту же категорию в следующий час
+        memory['next_category'] = chosen_cat
         save_memory(memory)
 
 if __name__ == "__main__":
