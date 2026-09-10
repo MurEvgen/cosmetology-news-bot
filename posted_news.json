@@ -22,7 +22,8 @@
     "https://doi.org/10.1016/s0140-6736(25)01576-4",
     "https://www.sciencedaily.com/releases/2026/05/260519003215.htm",
     "https://pubmed.ncbi.nlm.nih.gov/42701667/",
-    "https://www.healio.com/news/dermatology/20260902/answering-common-questions-about-the-newest-us-sunscreen-ingredient"
+    "https://www.healio.com/news/dermatology/20260902/answering-common-questions-about-the-newest-us-sunscreen-ingredient",
+    "https://www.sciencedaily.com/releases/2026/04/260420014738.htm"
   ],
   "posted_titles": [
     "the common mistake that could make aging joints hurt more",
@@ -47,11 +48,12 @@
     "once-daily oral icotrokinra versus placebo and once-daily oral deucravacitinib in participants with moderate-to-severe plaque psoriasis (iconic-advance 1 &amp; 2): two phase 3, randomised, placebo-controlled and active-comparator-controlled trials",
     "breakthrough drug reverses aging in skin and dramatically speeds healing",
     "an adhesive hydrogel enabling spatiotemporal delivery of umbilical cord exosomes for scarless skin regeneration through immunomodulation and ecm remodeling",
-    "most common questions about america’s new sunscreen filter"
+    "most common questions about america’s new sunscreen filter",
+    "scientists discover skincare compound that kills drug-resistant bacteria"
   ],
-  "site_index": 2,
-  "tg_index": 1,
+  "site_index": 1,
+  "tg_index": 2,
   "last_source": "site",
-  "science_index": 2,
+  "science_index": 3,
   "next_category": "science"
 }
