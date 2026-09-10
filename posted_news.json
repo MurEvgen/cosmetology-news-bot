@@ -23,7 +23,8 @@
     "https://www.sciencedaily.com/releases/2026/05/260519003215.htm",
     "https://pubmed.ncbi.nlm.nih.gov/42701667/",
     "https://www.healio.com/news/dermatology/20260902/answering-common-questions-about-the-newest-us-sunscreen-ingredient",
-    "https://www.sciencedaily.com/releases/2026/04/260420014738.htm"
+    "https://www.sciencedaily.com/releases/2026/04/260420014738.htm",
+    "https://m.koreaherald.com/article/10867456"
   ],
   "posted_titles": [
     "the common mistake that could make aging joints hurt more",
@@ -49,11 +50,12 @@
     "breakthrough drug reverses aging in skin and dramatically speeds healing",
     "an adhesive hydrogel enabling spatiotemporal delivery of umbilical cord exosomes for scarless skin regeneration through immunomodulation and ecm remodeling",
     "most common questions about america’s new sunscreen filter",
-    "scientists discover skincare compound that kills drug-resistant bacteria"
+    "scientists discover skincare compound that kills drug-resistant bacteria",
+    "hyosung scales up us factories for ai power boom"
   ],
-  "site_index": 1,
-  "tg_index": 2,
+  "site_index": 4,
+  "tg_index": 3,
   "last_source": "site",
-  "science_index": 3,
+  "science_index": 4,
   "next_category": "science"
 }
