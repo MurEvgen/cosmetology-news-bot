@@ -47,7 +47,7 @@ TG_FEEDS = [
 
 CATEGORIES = ['site', 'science', 'tg']
 
-# ========== ✅ БЕЛЫЙ СПИСОК (проходные слова нашей темы) ==========
+# ========== ✅ БЕЛЫЙ СПИСОК ==========
 WHITELIST_KEYWORDS = [
     # 🧴 ЗАБОЛЕВАНИЯ КОЖИ (EN)
     'acne', 'pimples', 'blackheads', 'comedone',
@@ -176,8 +176,8 @@ WHITELIST_KEYWORDS = [
     '필링', '리프팅', '실리프팅',
     '주름', '탄력', '미백', '보습', '수분',
     '자외선차단', '선크림',
-    '성형', '미용', '뷰티',
-    '화장품', '스킨케어',
+    '미용', '뷰티',
+    '스킨케어',
     '콜라겐', '히알루론산', '펩타이드',
     '레티놀',
     
@@ -192,13 +192,59 @@ WHITELIST_KEYWORDS = [
     '射频', '热玛吉', '超声刀', '线雕', '埋线提升',
     '皱纹', '抗衰老', '年轻化', '美白', '祛斑',
     '保湿', '补水', '防晒', '防晒霜',
-    '整形', '美容', '化妆品', '护肤品',
+    '美容', '护肤品',
     '胶原蛋白', '透明质酸', '多肽', '视黄醇',
 ]
 
-# ========== ❌ НЕГАТИВНЫЙ СПИСОК (отсеивает чужие темы) ==========
+# ========== ❌ НЕГАТИВНЫЙ СПИСОК ==========
 NEGATIVE_KEYWORDS = [
-    # 🚀 ВОЕННАЯ / ОБОРОННАЯ ТЕМАТИКА (ГЛАВНАЯ ЗАЩИТА!)
+    # 🏙️ УРБАНИСТИКА / ИНФРАСТРУКТУРА
+    'urban planning', 'urban development', 'city planning',
+    'data centre', 'data center', 'smart city', 'metropolis',
+    'infrastructure project', 'transport corridor',
+    'урбанист', 'градостроит', 'инфраструктурн проект',
+    'транспортный коридор', 'метрополис', 'дата-центр',
+    'northern metropolis', 'северная метрополия',
+    'green data centre', 'logistics flow', 'логистическ поток',
+    
+    # 💼 БИЗНЕС / РИТЕЙЛ
+    'retail network', 'store network', 'chain expansion',
+    'opened stores', '200 stores', 'retail points',
+    'pharmacy chain', 'store launch', 'business expansion',
+    'розничная сеть', 'торговая сеть', 'сеть магазинов',
+    'открыл точек', 'сеть аптек', 'аптечная сеть',
+    '200 точек', 'розничн', 'бизнес-экспансия',
+    'pharmacy beauty zone', 'baropharm',
+    'sales channel', 'канал сбыта', 'торговые точки',
+    
+    # 🌍 ГЕОПОЛИТИКА / ДИПЛОМАТИЯ
+    'geopolitics', 'diplomacy', 'diplomatic', 'foreign policy',
+    'foreign minister', 'foreign affairs', 'bilateral relations',
+    'global south', 'public diplomacy', 'summit',
+    'state visit', 'international relations',
+    'strait', 'ormuz', 'strait of ormuz',
+    'геополитик', 'дипломат', 'внешняя политика',
+    'министр иностранных дел', 'международные отношения',
+    'публичная дипломатия', 'государственный визит',
+    'глобальный юг', 'двусторонние отношения',
+    'пролив', 'ормуз',
+    'phone call between ministers', 'телефонные переговоры',
+    'развивающиеся страны', 'многосторонн',
+    
+    # 💊 ФАРМАЦЕВТИЧЕСКИЙ БИЗНЕС / ОБЩАЯ ОНКОЛОГИЯ
+    'series a', 'series b', 'funding round', 'venture capital',
+    'pharmaceutical investment', 'drug development',
+    'solid tumor', 'solid tumour', 'oncology drug',
+    'anti-cancer', 'peptide-drug conjugate', 'pdc therapy',
+    'раунд финансирования', 'венчурн', 'инвестиции в разработку',
+    'солидн опухол', 'противораков', 'онкопрепарат',
+    'pdc', 'two step therapeutics', 'twostep',
+    'fda approved', 'clinical trial', 'phase i', 'phase ii', 'phase iii',
+    'клиническ испытан', 'фазы испытан',
+    'pfizer', 'merck', 'oncology',
+    'таргетн терап', 'онколог',
+    
+    # 🚀 ВОЕННАЯ / ОБОРОННАЯ ТЕМАТИКА
     'missile', 'rocket', 'weapon', 'military', 'defense', 'defence',
     'aerospace', 'army', 'navy', 'air force', 'armed forces',
     'artillery', 'tank', 'fighter jet', 'warship', 'submarine',
@@ -225,7 +271,7 @@ NEGATIVE_KEYWORDS = [
     'конференция по физике', 'лазерная физика', 'квантовая оптика', 'фотоника',
     'оптике', 'оптика',
     
-    # 🏬 Ритейл/бизнес
+    # 🏬 Прочий ритейл
     'retail store opening', 'fashion store', 'flagship store opening',
     'music platform', 'entertainment company', 'k-pop', 'idol group',
     'открытие магазина', 'флагманский магазин', 'музыкальная платформа',
@@ -299,7 +345,7 @@ CONTEXT_PAIRS = {
               'лазерная терапия', 'лазерное лечение', 'лазерная шлифовка'],
     'beauty': ['skincare', 'cosmetic', 'aesthetic', 'procedure', 'treatment',
                'product', 'cream', 'serum', 'skin', 'уход за кожей',
-               'косметическ'],
+               'косметическ', 'dermatology'],
     'aesthetic': ['medicine', 'procedure', 'treatment', 'surgery', 'dermatology',
                   'cosmetic', 'injectable', 'filler', 'skin', 'clinic',
                   'эстетическая медицина', 'косметолог'],
@@ -310,35 +356,44 @@ CONTEXT_PAIRS = {
                  'косметическая выставка'],
     'culture': ['cell culture', 'tissue culture', 'bacterial culture',
                 'клеточная культура', 'тканевая культура'],
+    
+    # 🆕 Новые контекстные пары
+    'peptide': ['skincare', 'cosmetic', 'anti-aging', 'cream', 'serum',
+                'collagen', 'wrinkle', 'moisturizer', 'dermatology',
+                'крем', 'сыворотка', 'уход за кожей', 'коллаген',
+                'морщины', 'увлажн', 'косметическ', 'anti-age',
+                'skin care', 'rejuvenation', 'омоложен'],
+    'pharmacy': ['cosmetic', 'dermatology', 'skincare', 'drug',
+                 'аптечная косметика', 'дерматологическ', 'лекарственн'],
+    'k-beauty': ['skincare', 'cosmetic', 'skin', 'routine', 'dermatology',
+                 'уход за кожей', 'косметическ', 'процедур'],
+    'invest': ['dermatology', 'cosmetic', 'skincare', 'beauty',
+               'инвестиции в косметолог', 'инвестиции в уход'],
+    '뷰티': ['피부', '스킨케어', '피부과', '화장품', '미용'],
+    '화장품': ['피부', '피부과', '스킨케어', '미용'],
 }
 
 # Источники, требующие строгой проверки
 GENERAL_NEWS_SOURCES = [
     'scmp', 'china daily', 'korea herald', 'yonhap',
     'nplus1', 'elementy', 'scientific russia',
-    'bosa.co.kr', 'yna.co.kr',
+    'bosa.co.kr', 'yna.co.kr', '의학신문',
 ]
 CULTURE_RISK_SOURCES = [
     'korea herald', 'yonhap', 'china daily', 'scmp',
     'bosa.co.kr', 'yna.co.kr',
 ]
 
-# 🎯 Специализированные источники (только профильные дерматологические/косметологические)
+# 🎯 Специализированные источники (ТОЛЬКО профильные дерматологические)
 SPECIALIZED_SOURCES = [
-    'healio',              # профильный дерматологический портал
-    'sciencedaily',        # раздел skin_care уже по теме
-    'skin care news',      # ScienceDaily skin care
-    'forum kosmetolog',    # TG
-    'дневник дерматовен',  # TG
-    'чат косметолог',      # TG
-    'косметология inside', # TG
-    'dermatolog',          # TG
-    'kosmetolog',          # TG
-    'pubmed',              # медицинские статьи
-    'crossref',            # научные статьи
-    'semanticscholar',     # научные статьи
-    'europepmc',           # медицинские статьи
-    'medrxiv',             # медицинские препринты
+    'healio',
+    'sciencedaily',
+    'skin care news',
+    'forum kosmetolog', 'дневник дерматовен',
+    'чат косметолог', 'косметология inside',
+    'dermatolog', 'kosmetolog',
+    'pubmed', 'crossref', 'semanticscholar',
+    'europepmc', 'medrxiv', 'lancet',
 ]
 
 # ========== ПАМЯТЬ ==========
@@ -778,10 +833,11 @@ def is_specialized_source(source):
 
 def is_relevant(news_item):
     """
-    Логика фильтрации (строгая):
+    Усиленная логика фильтрации:
     1. Негативные слова → отсев (защита от чужих тем)
-    2. Белый список → ОБЯЗАТЕЛЬНО должно быть хотя бы одно проходное слово
-    3. Для общих источников → дополнительная проверка контекста
+    2. Для общих источников: whitelist-слово ОБЯЗАТЕЛЬНО в ЗАГОЛОВКЕ
+    3. Для специализированных: whitelist-слово в любом месте
+    4. Дополнительная проверка контекста для двусмысленных слов
     """
     title = news_item['title']
     title_lower = title.lower()
@@ -795,8 +851,30 @@ def is_relevant(news_item):
             print(f"   ❌ Отсеяно (негативное слово '{neg}'): {title[:50]}")
             return False
 
-    # 2. ✅ БЕЛЫЙ СПИСОК: ОБЯЗАТЕЛЬНО ищем хотя бы одно проходное слово
-    # ВАЖНО: проверяем ВСЕ источники, включая "специализированные"!
+    # 2. Определяем тип источника
+    is_specialized = is_specialized_source(source)
+    is_general = any(gen in source for gen in GENERAL_NEWS_SOURCES)
+    is_culture_risk = any(cs in source for cs in CULTURE_RISK_SOURCES)
+
+    # 3. ✅ Для ОБЩИХ источников — whitelist-слово ОБЯЗАТЕЛЬНО в ЗАГОЛОВКЕ
+    if is_general or is_culture_risk:
+        matched_in_title = any(kw.lower() in title_lower for kw in WHITELIST_KEYWORDS)
+        if not matched_in_title:
+            print(f"   ❌ Отсеяно (нет whitelist в ЗАГОЛОВКЕ, общий источник): {title[:50]}")
+            return False
+        
+        # И дополнительная проверка контекста для двусмысленных слов
+        for base_word, context_words in CONTEXT_PAIRS.items():
+            if base_word.lower() in text:
+                has_medical_context = any(ctx.lower() in text for ctx in context_words)
+                if not has_medical_context:
+                    print(f"   ❌ Отсеяно (нет мед. контекста для '{base_word}'): {title[:50]}")
+                    return False
+        
+        print(f"   ✅ Прошло (общий источник + whitelist в заголовке): {title[:50]}")
+        return True
+
+    # 4. ✅ Для специализированных источников — whitelist в любом месте
     matched_keyword = None
     for kw in WHITELIST_KEYWORDS:
         if kw.lower() in text:
@@ -808,23 +886,6 @@ def is_relevant(news_item):
         return False
     
     print(f"   ✅ Прошло по whitelist ('{matched_keyword}'): {title[:50]}")
-    
-    # 3. Для специализированных источников — этого достаточно
-    if is_specialized_source(source):
-        return True
-    
-    # 4. Для общих источников — дополнительная проверка контекста
-    is_culture_risk = any(cs in source for cs in CULTURE_RISK_SOURCES)
-    is_general = any(gen in source for gen in GENERAL_NEWS_SOURCES)
-
-    if is_culture_risk or is_general:
-        for base_word, context_words in CONTEXT_PAIRS.items():
-            if base_word in text:
-                has_medical_context = any(ctx in text for ctx in context_words)
-                if not has_medical_context:
-                    print(f"   ❌ Отсеяно (нет мед. контекста для '{base_word}'): {title[:50]}")
-                    return False
-
     return True
 
 def get_feeds_for_category(cat):
@@ -848,7 +909,7 @@ def find_news_in_category(cat, memory, posted_links, posted_titles):
         print(f"   📡 [{cat.upper()}] источник #{idx+1}/{n}: {feed}")
         news = fetch_from_feed(feed)
 
-        # 🎯 Адаптивная задержка: больше для API, меньше для RSS
+        # 🎯 Адаптивная задержка
         if any(prefix in feed for prefix in ['crossref:', 'pubmed:', 'semanticscholar:', 'europepmc:']):
             time.sleep(2.0)
         elif feed == 'medrxiv':
