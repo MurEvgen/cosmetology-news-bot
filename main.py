@@ -198,7 +198,38 @@ WHITELIST_KEYWORDS = [
 
 # ========== ❌ НЕГАТИВНЫЙ СПИСОК ==========
 NEGATIVE_KEYWORDS = [
-    # 🏙️ УРБАНИСТИКА / ИНФРАСТРУКТУРА
+    # 🏛️ ПОЛИТИКА / ГОСУПРАВЛЕНИЕ
+    'official resign', 'resignation', 'government official',
+    'disciplinary procedure', 'public administration',
+    'senior official', 'civil servant', 'government policy',
+    'political statement', 'policy address',
+    'чиновник', 'отставка', 'государственн служащ',
+    'дисциплинарн процедур', 'государственное управление',
+    'политическ заявлени', 'правительственн',
+    
+    # 👥 ДЕМОГРАФИЯ / СОЦИОЛОГИЯ
+    'demographic', 'birth rate', 'fertility rate',
+    'ageing population', 'aging population', 'population crisis',
+    'job losses', 'employment crisis', 'labor market', 'labour market',
+    'демограф', 'рождаемость', 'фертильност',
+    'старение населения', 'демографическ кризис',
+    'потеря рабоч', 'рынок труда', 'безработиц',
+    
+    # ⚰️ НЕКРОЛОГИ / ПАМЯТЬ
+    'passed away', 'died', 'death', 'memorial',
+    'tribute', 'remembered', 'obituary', 'funeral',
+    'скончался', 'умер', 'смерть', 'памяти',
+    'некролог', 'похороны', 'прощание',
+    'отдает дань памяти', 'вклад в развитие',
+    
+    # 🏗️ ИНФРАСТРУКТУРА / СТРОИТЕЛЬСТВО
+    'elevator', 'lift installation', 'building defect',
+    'construction defect', 'hospital building',
+    'construction project', 'infrastructure delay',
+    'лифт', 'установка лифт', 'строительн дефект',
+    'дефект здани', 'больничн корпус', 'строительн проект',
+    
+    # 🏙️ УРБАНИСТИКА
     'urban planning', 'urban development', 'city planning',
     'data centre', 'data center', 'smart city', 'metropolis',
     'infrastructure project', 'transport corridor',
@@ -299,7 +330,7 @@ NEGATIVE_KEYWORDS = [
     'university ranking', 'school curriculum', 'student exam',
     'рейтинг университетов', 'школьная программа',
     
-    # 🚗 Транспорт/инфраструктура
+    # 🚗 Транспорт
     'highway construction', 'railway project', 'airport expansion',
     'строительство дороги', 'железная дорога',
     
@@ -356,8 +387,6 @@ CONTEXT_PAIRS = {
                  'косметическая выставка'],
     'culture': ['cell culture', 'tissue culture', 'bacterial culture',
                 'клеточная культура', 'тканевая культура'],
-    
-    # 🆕 Новые контекстные пары
     'peptide': ['skincare', 'cosmetic', 'anti-aging', 'cream', 'serum',
                 'collagen', 'wrinkle', 'moisturizer', 'dermatology',
                 'крем', 'сыворотка', 'уход за кожей', 'коллаген',
@@ -834,10 +863,10 @@ def is_specialized_source(source):
 def is_relevant(news_item):
     """
     Усиленная логика фильтрации:
-    1. Негативные слова → отсев (защита от чужих тем)
-    2. Для общих источников: whitelist-слово ОБЯЗАТЕЛЬНО в ЗАГОЛОВКЕ
-    3. Для специализированных: whitelist-слово в любом месте
-    4. Дополнительная проверка контекста для двусмысленных слов
+    1. Негативные слова → отсев
+    2. Для общих источников: whitelist ОБЯЗАТЕЛЬНО в ЗАГОЛОВКЕ
+    3. Для специализированных: whitelist в любом месте
+    4. Контекстная проверка двусмысленных слов
     """
     title = news_item['title']
     title_lower = title.lower()
@@ -845,7 +874,7 @@ def is_relevant(news_item):
     text = title_lower + ' ' + summary_lower
     source = news_item.get('source', '').lower()
 
-    # 1. ❌ ЖЁСТКИЙ фильтр по негативным словам (первый барьер)
+    # 1. ❌ ЖЁСТКИЙ фильтр по негативным словам
     for neg in NEGATIVE_KEYWORDS:
         if neg.lower() in text:
             print(f"   ❌ Отсеяно (негативное слово '{neg}'): {title[:50]}")
@@ -856,14 +885,14 @@ def is_relevant(news_item):
     is_general = any(gen in source for gen in GENERAL_NEWS_SOURCES)
     is_culture_risk = any(cs in source for cs in CULTURE_RISK_SOURCES)
 
-    # 3. ✅ Для ОБЩИХ источников — whitelist-слово ОБЯЗАТЕЛЬНО в ЗАГОЛОВКЕ
+    # 3. ✅ Для ОБЩИХ источников — whitelist ОБЯЗАТЕЛЬНО в ЗАГОЛОВКЕ
     if is_general or is_culture_risk:
         matched_in_title = any(kw.lower() in title_lower for kw in WHITELIST_KEYWORDS)
         if not matched_in_title:
             print(f"   ❌ Отсеяно (нет whitelist в ЗАГОЛОВКЕ, общий источник): {title[:50]}")
             return False
         
-        # И дополнительная проверка контекста для двусмысленных слов
+        # Дополнительная проверка контекста для двусмысленных слов
         for base_word, context_words in CONTEXT_PAIRS.items():
             if base_word.lower() in text:
                 has_medical_context = any(ctx.lower() in text for ctx in context_words)
@@ -874,7 +903,7 @@ def is_relevant(news_item):
         print(f"   ✅ Прошло (общий источник + whitelist в заголовке): {title[:50]}")
         return True
 
-    # 4. ✅ Для специализированных источников — whitelist в любом месте
+    # 4. ✅ Для специализированных — whitelist в любом месте
     matched_keyword = None
     for kw in WHITELIST_KEYWORDS:
         if kw.lower() in text:
