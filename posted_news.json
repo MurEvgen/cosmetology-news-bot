@@ -135,9 +135,9 @@
     "[photo] подскажите пожалуйста что это может быть и чем лечить 🙏была у дерматолога сказали акн [...]",
     "антиоксидант skq1 оказался сильным антибиотиком"
   ],
-  "site_index": 0,
-  "tg_index": 0,
+  "site_index": 1,
+  "tg_index": 1,
   "last_source": "site",
-  "science_index": 0,
-  "next_category": "science"
+  "science_index": 1,
+  "next_category": "tg"
 }
