@@ -198,6 +198,20 @@ WHITELIST_KEYWORDS = [
 
 # ========== ❌ НЕГАТИВНЫЙ СПИСОК ==========
 NEGATIVE_KEYWORDS = [
+    # 🚁 ВЕРТОЛЁТЫ / АВИАЦИЯ (НОВОЕ)
+    'helicopter', 'chopper', 'seahawk', 'black hawk', 'apache',
+    'attack helicopter', 'military helicopter', 'naval aviation',
+    'вертолёт', 'вертолет', 'боевой вертолет', 'морской вертолет',
+    'военная авиация', 'вертолётн', 'закупка вертолет',
+    
+    # 💼 ВОЕННЫЕ КОНТРАКТЫ / ЗАКУПКИ (НОВОЕ)
+    'procurement', 'military contract', 'defense procurement',
+    'weapons procurement', 'arms procurement', 'defense acquisition',
+    'military acquisition', 'defense spending',
+    'оборонный заказ', 'оборонный контракт', 'государственный оборонный',
+    'закупка вооруж', 'закупка оружи', 'военный контракт',
+    'расходы на оборону',
+    
     # 🏛️ ПОЛИТИКА / ГОСУПРАВЛЕНИЕ
     'official resign', 'resignation', 'government official',
     'disciplinary procedure', 'public administration',
@@ -367,6 +381,17 @@ NEGATIVE_KEYWORDS = [
     # 🧬 ОБЩАЯ ГЕНЕТИКА
     'genome sequencing', 'gene editing', 'crispr study',
     'секвенирование генома',
+]
+
+# ========== 🚫 НЕГАТИВНЫЕ ХЭШТЕГИ (НОВОЕ) ==========
+NEGATIVE_HASHTAGS = [
+    '#оборона', '#оборон', '#военн', '#армия', '#флот', '#ввс',
+    '#геополитик', '#дипломат', '#политик', '#международныеотношения',
+    '#международные_отношения', '#внешняяполитика', '#внешняя_политика',
+    '#демограф', '#урбанист', '#градостроит', '#инфраструктур',
+    '#экономика', '#фондовыйрынок', '#инвестиции',
+    '#некролог', '#памяти', '#история',
+    '#южнаякорея_политик', '#hongkong_politics',
 ]
 
 # ========== КОНТЕКСТНЫЕ ПАРЫ ==========
@@ -860,19 +885,34 @@ def is_specialized_source(source):
     source_lower = source.lower()
     return any(spec in source_lower for spec in SPECIALIZED_SOURCES)
 
+def has_negative_hashtags(text):
+    """Проверяет наличие негативных хэштегов в тексте."""
+    text_lower = text.lower()
+    for hashtag in NEGATIVE_HASHTAGS:
+        if hashtag.lower() in text_lower:
+            return hashtag
+    return None
+
 def is_relevant(news_item):
     """
     Усиленная логика фильтрации:
-    1. Негативные слова → отсев
-    2. Для общих источников: whitelist ОБЯЗАТЕЛЬНО в ЗАГОЛОВКЕ
-    3. Для специализированных: whitelist в любом месте
-    4. Контекстная проверка двусмысленных слов
+    1. Негативные хэштеги → отсев (НОВОЕ!)
+    2. Негативные слова → отсев
+    3. Для общих источников: whitelist ОБЯЗАТЕЛЬНО в ЗАГОЛОВКЕ
+    4. Для специализированных: whitelist в любом месте
+    5. Контекстная проверка двусмысленных слов
     """
     title = news_item['title']
     title_lower = title.lower()
     summary_lower = news_item.get('summary', '').lower()
     text = title_lower + ' ' + summary_lower
     source = news_item.get('source', '').lower()
+
+    # 0. 🚫 НОВОЕ: Проверка негативных хэштегов
+    bad_hashtag = has_negative_hashtags(text)
+    if bad_hashtag:
+        print(f"   ❌ Отсеяно (негативный хэштег '{bad_hashtag}'): {title[:50]}")
+        return False
 
     # 1. ❌ ЖЁСТКИЙ фильтр по негативным словам
     for neg in NEGATIVE_KEYWORDS:
