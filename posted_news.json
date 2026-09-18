@@ -175,9 +175,9 @@
     "physicians should ‘look beyond the rash,’ treat the whole patient",
     "dermatologists must screen systemically for comorbidities in atopic dermatitis"
   ],
-  "site_index": 2,
-  "tg_index": 2,
+  "site_index": 3,
+  "tg_index": 3,
   "last_source": "site",
-  "science_index": 4,
-  "next_category": "science"
+  "science_index": 0,
+  "next_category": "tg"
 }
