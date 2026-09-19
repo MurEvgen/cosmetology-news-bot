@@ -177,9 +177,9 @@
     "dermatologists must screen systemically for comorbidities in atopic dermatitis",
     "[препринт] skin cancer classification using explainable artificial intelligence with an ensemble model and rigorous leakage free validation"
   ],
-  "site_index": 1,
-  "tg_index": 3,
+  "site_index": 2,
+  "tg_index": 0,
   "last_source": "site",
-  "science_index": 0,
-  "next_category": "site"
+  "science_index": 1,
+  "next_category": "science"
 }
