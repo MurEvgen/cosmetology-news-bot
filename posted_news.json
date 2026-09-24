@@ -219,9 +219,9 @@
     "[препринт] a dual-species plant-derived extracellular vesicle and growth factors formulation for hair and scalp care: a randomized, placebo-controlled study",
     "[препринт] sex-associated mir-4286 is related to breslow thickness and tils in stage ii/iii primary cutaneous melanoma"
   ],
-  "site_index": 2,
-  "tg_index": 3,
+  "site_index": 3,
+  "tg_index": 0,
   "last_source": "site",
-  "science_index": 4,
-  "next_category": "tg"
+  "science_index": 0,
+  "next_category": "site"
 }
