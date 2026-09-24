@@ -221,9 +221,9 @@
     "[препринт] sex-associated mir-4286 is related to breslow thickness and tils in stage ii/iii primary cutaneous melanoma",
     "breakthrough drug reverses skin aging and dramatically speeds healing"
   ],
-  "site_index": 2,
-  "tg_index": 3,
+  "site_index": 3,
+  "tg_index": 0,
   "last_source": "site",
-  "science_index": 1,
-  "next_category": "site"
+  "science_index": 2,
+  "next_category": "science"
 }
