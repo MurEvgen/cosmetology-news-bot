@@ -108,7 +108,8 @@
     "https://www.healio.com/news/dermatology/20260923/beneath-the-surface-how-red-light-therapy-works-with-david-ozog-md",
     "https://doi.org/10.64898/2026.09.07.26362401",
     "https://doi.org/10.64898/2026.09.04.26362289",
-    "https://www.sciencedaily.com/releases/2026/09/260922223008.htm"
+    "https://www.sciencedaily.com/releases/2026/09/260922223008.htm",
+    "https://www.healio.com/news/dermatology/20260924/call-center-decision-tree-model-cut-dermatology-wait-times-reduced-noshow-visits"
   ],
   "posted_titles": [
     "the common mistake that could make aging joints hurt more",
@@ -219,11 +220,12 @@
     "beneath the surface: how red light therapy works with david ozog, md",
     "[препринт] a dual-species plant-derived extracellular vesicle and growth factors formulation for hair and scalp care: a randomized, placebo-controlled study",
     "[препринт] sex-associated mir-4286 is related to breslow thickness and tils in stage ii/iii primary cutaneous melanoma",
-    "breakthrough drug reverses skin aging and dramatically speeds healing"
+    "breakthrough drug reverses skin aging and dramatically speeds healing",
+    "call center ‘decision tree’ model cut dermatology wait times, reduced no-show visits"
   ],
-  "site_index": 3,
-  "tg_index": 0,
+  "site_index": 2,
+  "tg_index": 1,
   "last_source": "site",
-  "science_index": 2,
+  "science_index": 3,
   "next_category": "science"
 }
