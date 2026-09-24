@@ -223,9 +223,9 @@
     "breakthrough drug reverses skin aging and dramatically speeds healing",
     "call center ‘decision tree’ model cut dermatology wait times, reduced no-show visits"
   ],
-  "site_index": 5,
-  "tg_index": 0,
+  "site_index": 6,
+  "tg_index": 1,
   "last_source": "site",
-  "science_index": 1,
-  "next_category": "science"
+  "science_index": 2,
+  "next_category": "tg"
 }
