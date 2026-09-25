@@ -231,9 +231,9 @@
     "[photo] пилинг при розацеа🔍 разбор клинического случаявопрос от косметолога:👩 клиентке 45 лет",
     "похоже на фолликулярный гиперкератоз но это предположение"
   ],
-  "site_index": 0,
-  "tg_index": 1,
+  "site_index": 1,
+  "tg_index": 2,
   "last_source": "site",
-  "science_index": 1,
-  "next_category": "science"
+  "science_index": 2,
+  "next_category": "tg"
 }
