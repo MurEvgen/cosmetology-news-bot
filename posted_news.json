@@ -247,9 +247,9 @@
     "попробуйте элатокс он аналог диспорта",
     "сам себе доктор"
   ],
-  "site_index": 3,
-  "tg_index": 0,
+  "site_index": 4,
+  "tg_index": 1,
   "last_source": "site",
-  "science_index": 1,
-  "next_category": "science"
+  "science_index": 2,
+  "next_category": "tg"
 }
