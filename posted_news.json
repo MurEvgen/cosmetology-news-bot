@@ -285,9 +285,9 @@
     "design, calibration, and preliminary testing of an additive-manufactured raman spectrometer for skin cancer screening",
     "коллегибыли ли у вас случаи отсроченных отеков на филлер после вирусных заболеваний"
   ],
-  "site_index": 3,
-  "tg_index": 3,
+  "site_index": 4,
+  "tg_index": 0,
   "last_source": "site",
-  "science_index": 0,
-  "next_category": "tg"
+  "science_index": 1,
+  "next_category": "site"
 }
