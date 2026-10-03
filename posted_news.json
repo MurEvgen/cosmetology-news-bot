@@ -154,7 +154,8 @@
     "https://www.scmp.com/news/hong-kong/hong-kong-economy/article/3369494/money-money-us-uk-firms-still-coming-hong-kong-commerce-chief-says?utm_source=rss_feed",
     "https://www.scmp.com/business/article/3369536/hong-kong-ranks-7th-globally-drawing-next-wealthy-class-trailing-singapore-study?utm_source=rss_feed",
     "https://pubmed.ncbi.nlm.nih.gov/42721668/",
-    "https://www.healio.com/news/dermatology/20261002/glp1-use-associated-with-nail-detachment-hair-loss"
+    "https://www.healio.com/news/dermatology/20261002/glp1-use-associated-with-nail-detachment-hair-loss",
+    "https://doi.org/10.1101/2025.09.10.25335131"
   ],
   "posted_titles": [
     "the common mistake that could make aging joints hurt more",
@@ -311,11 +312,12 @@
     "‘money is money’: us, uk firms still coming to hong kong, commerce chief says",
     "hong kong ranks 7th globally in drawing next wealthy class – trailing singapore: study",
     "effect of glass transition temperature on the final morphology of nanoparticle-laden aerosol droplets",
-    "glp-1 use associated with nail detachment, hair loss"
+    "glp-1 use associated with nail detachment, hair loss",
+    "[препринт] short-term changes in dermal density following topical application of a progerinin-containing serum: an exploratory clinical study"
   ],
-  "site_index": 0,
+  "site_index": 1,
   "tg_index": 1,
   "last_source": "site",
   "science_index": 4,
-  "next_category": "site"
+  "next_category": "tg"
 }
