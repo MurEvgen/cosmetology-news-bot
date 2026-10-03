@@ -323,9 +323,9 @@
     "[photo] дорогие подписчики !проголосуйте пожалуйста за канал -чтобы мы снова могли публиковать [...]",
     "[photo] светлоклеточная акантома(акантома дегоса, clear cell acanthoma (cca)) - редкоедоброкач [...]"
   ],
-  "site_index": 1,
-  "tg_index": 0,
+  "site_index": 2,
+  "tg_index": 1,
   "last_source": "site",
-  "science_index": 0,
-  "next_category": "science"
+  "science_index": 1,
+  "next_category": "tg"
 }
