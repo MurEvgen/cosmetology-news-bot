@@ -327,9 +327,9 @@
     "попробуйте elatox очень крутой",
     "коллеги, не забывайте про риск герпеса"
   ],
-  "site_index": 1,
-  "tg_index": 1,
+  "site_index": 2,
+  "tg_index": 2,
   "last_source": "site",
-  "science_index": 0,
-  "next_category": "site"
+  "science_index": 1,
+  "next_category": "science"
 }
