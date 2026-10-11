@@ -196,102 +196,113 @@ WHITELIST_KEYWORDS = [
     '胶原蛋白', '透明质酸', '多肽', '视黄醇',
 ]
 
-# ========== ❌ НЕГАТИВНЫЙ СПИСОК ==========
+# ========== ❌ НЕГАТИВНЫЙ СПИСОК (ИСПРАВЛЕННЫЙ) ==========
 NEGATIVE_KEYWORDS = [
-    # ✈️ АВИАЦИЯ / ТРАНСПОРТ (НОВОЕ)
-    'airline', 'aviation', 'paraglider', 'aircraft', 'flight',
-    'airlines', 'carrier', 'cabin crew', 'business class',
+    # ✈️ АВИАЦИЯ / ТРАНСПОРТ (ИСПРАВЛЕНО: убраны короткие слова)
+    'airline', 'airlines', 'aviation', 'paraglider', 'aircraft accident',
+    'commercial aircraft', 'flight crash', 'cabin crew', 'business class',
+    'airline rating', 'skytrax', 'cathay pacific', 'singapore airlines',
+    'qatar airways',
     'авиакомпания', 'авиационн', 'параплан', 'самолёт', 'самолет',
     'вертолёт', 'вертолет', 'рейс', 'аэропорт', 'перевозчик', 'экипаж',
     'авиационное происшествие', 'катастрофа', 'крушение',
+    'воздушн поток', 'пилот',
     
-    # 🏃 СПОРТ (НОВОЕ)
+    # 🏃 СПОРТ
     'asian games', 'olympics', 'pentathlon', 'athlete', 'gold medal',
     'team wins', 'championship', 'sports competition',
     'азиатские игры', 'азиада', 'олимпиада', 'пятиборье', 'атлет',
     'спортсмен', 'золотая медаль', 'соревновани', 'команда завоевала',
     'чемпионат', 'спортивная федерация',
     
-    # 🚨 КИБЕРБЕЗОПАСНОСТЬ (НОВОЕ)
+    # 🚨 КИБЕРБЕЗОПАСНОСТЬ
     'cyberattack', 'cybersecurity', 'scam', 'fraud', 'phishing', 'hacker',
-    'malicious software', 'malware', 'data breach',
+    'malicious software', 'malware', 'data breach', 'customer service scam',
+    'ip-address spoof', 'ip address spoof',
     'кибератака', 'кибербезопасность', 'мошенничество', 'фишинг',
     'хакер', 'вредоносное приложение', 'сетевой трафик',
     'утечка данных', 'поддельная служба поддержки',
     
-    # 🏘️ НЕДВИЖИМОСТЬ / ФИНАНСЫ (НОВОЕ)
+    # 🏘️ НЕДВИЖИМОСТЬ / ФИНАНСЫ
     'real estate', 'commercial property', 'property market',
     'capital market', 'wealthy', 'wealth management',
     'недвижимость', 'коммерческая недвижимость', 'рынок недвижимости',
     'инвестор', 'иностранный капитал', 'финансовый центр',
     'состоятельны', 'управление капитал', 'рынок капитала',
+    'shorea capital', 'colliers',
     
-    # 🐕 ЭПИДЕМИОЛОГИЯ / УКУСЫ (НОВОЕ)
+    # 🐕 ЭПИДЕМИОЛОГИЯ / УКУСЫ (ИСПРАВЛЕНО)
     'dog bite', 'animal attack', 'rabies', 'zoonotic',
     'animal bites', 'cat attack', 'wildlife incident',
+    'mass dog bite', 'multiple dog bite', 'pet attack',
     'укус собак', 'укусов одной собакой', 'множественных укусов',
     'нападение животного', 'нападение кота', 'бешенство', 'зооноз',
     'эпидемиологический', 'эпидемиология',
+    'кластеризация рисков',
     
-    # 🔬 ФИЗИКА / АЭРОЗОЛИ / ОПТИКА (НОВОЕ)
-    'aerosol', 'droplet', 'glass transition', 'nanoparticle',
+    # 🔬 ФИЗИКА / АЭРОЗОЛИ / ОПТИКА (НЕ КОСМЕТИЧЕСКАЯ)
+    'aerosol droplet', 'glass transition', 'nanoparticle aerosol',
     'inhalation delivery', 'photonics', 'holography', 'applied optics',
+    'raman spectrometer', 'additive manufacturing',
     'аэрозоль', 'температура стеклования', 'наночастиц',
     'ингаляционн', 'фотоника', 'голография', 'прикладная оптика',
-    'физический институт',
+    'физический институт', 'рамановск',
     
-    # 🏺 АРХЕОЛОГИЯ (НОВОЕ)
+    # 🏺 АРХЕОЛОГИЯ
     'archaeology', 'iron age', 'excavation', 'ancient artifact',
-    'archaeological find', 'buried', 'sunken',
+    'archaeological find', 'buried', 'sunken', 'iron bar', 'iron ingot',
     'археолог', 'железный век', 'раскопк', 'историческая находка',
     'древние артефакты', 'затонувших', 'железных слитков',
-    'железных заготовок',
+    'железных заготовок', 'бипирамидальн',
     
-    # 🎭 ИСКУССТВО / ТЕАТР (НОВОЕ)
+    # 🎭 ИСКУССТВО / ТЕАТР
     'playwright', 'theatre', 'theater', 'ibsen prize',
     'literary prize', 'drama award', 'stage performance',
     'драматург', 'театр', 'нобелевская премия', 'премия ибсена',
     'сценическое', 'театральн',
     
-    # 🐻 ЗООЛОГИЯ (НОВОЕ)
-    'bear', 'wild mammals', 'animal diet', 'wildlife nutrition',
-    'медвед', 'дикое животное', 'дикие млекопитающие',
+    # 🐻 ЗООЛОГИЯ (ИСПРАВЛЕНО: убрано короткое 'bear')
+    'brown bear', 'black bear', 'polar bear', 'wild mammals',
+    'animal diet', 'wildlife nutrition', 'tree bark diet',
+    'медвежь', 'дикий медвед', 'дикое животное', 'дикие млекопитающие',
     'питание животных', 'рацион животных',
     
-    # 🏛️ ГОСУПРАВЛЕНИЕ / ПЛАНИРОВАНИЕ (НОВОЕ)
-    'hotline', 'government hotline', 'citizen service',
+    # 🏛️ ГОСУПРАВЛЕНИЕ / ПЛАНИРОВАНИЕ
+    'hotline 1823', 'government hotline', 'citizen service',
     'five-year plan', 'strategic planning', 'policy roadmap',
     'горячая линия', 'горячую линию', 'обслуживание граждан',
     'государственные ведомства', 'пятилетний план', 'пятилетняя стратегия',
     'стратегическое планирование', 'дорожная карта',
     
-    # 🤝 ДИПЛОМАТИЯ (НОВОЕ)
+    # 🤝 ДИПЛОМАТИЯ
     'diplomatic mission', 'bilateral', 'foreign embassy',
     'havana', 'washington talks', 'diplomatic dialogue',
     'дипломатическая миссия', 'двусторонни', 'энергетический сектор',
     'гавана', 'куба', 'вашингтон', 'дипломатическое взаимодействие',
     'каналы связи', 'межгосударственн',
     
-    # 🥾 ГОРНЫЙ ТУРИЗМ / ЧС (НОВОЕ)
-    'hiker', 'mountain trail', 'rescue', 'emergency evacuation',
-    'hiking accident', 'trail incident', 'mountain emergency',
+    # 🥾 ГОРНЫЙ ТУРИЗМ / ЧС (ИСПРАВЛЕНО: убрано короткое 'rescue')
+    'hiker', 'mountain trail', 'mountain rescue', 'search and rescue',
+    'emergency evacuation', 'hiking accident', 'trail incident',
+    'mountain emergency', 'lion rock', 'sunset peak',
     'горная тропа', 'поход', 'эвакуация', 'спасение',
     'потерял сознание', 'экстренная эвакуация', 'туристическ',
     'горный поход',
     
-    # 🚇 ОБЩЕСТВЕННЫЙ ТРАНСПОРТ / ШТРАФЫ (НОВОЕ)
-    'public transport', 'bus', 'metro', 'fine', 'penalty',
-    'passenger behavior', 'transit rules',
-    'общественный транспорт', 'автобус', 'метрополитен',
-    'штраф', 'пассажир', 'транзитн',
+    # 🚇 ОБЩЕСТВЕННЫЙ ТРАНСПОРТ / ШТРАФЫ (ИСПРАВЛЕНО: убраны 'bus', 'fine')
+    'public transport penalty', 'transit fine', 'passenger misconduct',
+    'bus etiquette', 'transit rules', 'mrt rules',
+    'общественный транспорт', 'пассажирск автобус', 'метрополитен',
+    'наложить штраф', 'административн штраф', 'штраф за', 'транзитн',
+    'нецивилизованное поведение',
     
-    # 🚁 ВЕРТОЛЁТЫ / ОБОРОНА (из предыдущих)
+    # 🚁 ВЕРТОЛЁТЫ / ОБОРОНА
     'helicopter', 'chopper', 'seahawk', 'black hawk', 'apache',
     'attack helicopter', 'military helicopter', 'naval aviation',
     'вертолёт', 'вертолет', 'боевой вертолет', 'морской вертолет',
     'военная авиация', 'вертолётн', 'закупка вертолет',
     
-    # 💼 ВОЕННЫЕ КОНТРАКТЫ (из предыдущих)
+    # 💼 ВОЕННЫЕ КОНТРАКТЫ
     'procurement', 'military contract', 'defense procurement',
     'weapons procurement', 'arms procurement', 'defense acquisition',
     'military acquisition', 'defense spending',
@@ -299,7 +310,7 @@ NEGATIVE_KEYWORDS = [
     'закупка вооруж', 'закупка оружи', 'военный контракт',
     'расходы на оборону',
     
-    # 🏛️ ПОЛИТИКА / ГОСУПРАВЛЕНИЕ (из предыдущих)
+    # 🏛️ ПОЛИТИКА / ГОСУПРАВЛЕНИЕ
     'official resign', 'resignation', 'government official',
     'disciplinary procedure', 'public administration',
     'senior official', 'civil servant', 'government policy',
@@ -308,7 +319,7 @@ NEGATIVE_KEYWORDS = [
     'дисциплинарн процедур', 'государственное управление',
     'политическ заявлени', 'правительственн',
     
-    # 👥 ДЕМОГРАФИЯ / СОЦИОЛОГИЯ (из предыдущих)
+    # 👥 ДЕМОГРАФИЯ / СОЦИОЛОГИЯ
     'demographic', 'birth rate', 'fertility rate',
     'ageing population', 'aging population', 'population crisis',
     'job losses', 'employment crisis', 'labor market', 'labour market',
@@ -316,21 +327,23 @@ NEGATIVE_KEYWORDS = [
     'старение населения', 'демографическ кризис',
     'потеря рабоч', 'рынок труда', 'безработиц',
     
-    # ⚰️ НЕКРОЛОГИ (из предыдущих)
-    'passed away', 'died', 'death', 'memorial',
-    'tribute', 'remembered', 'obituary', 'funeral',
-    'скончался', 'умер', 'смерть', 'памяти',
+    # ⚰️ НЕКРОЛОГИ (ИСПРАВЛЕНО: убрано короткое 'death')
+    'passed away', 'obituary', 'funeral', 'memorial service',
+    'tribute', 'remembered',
+    'скончался', 'умер', 'памяти',
     'некролог', 'похороны', 'прощание',
     'отдает дань памяти', 'вклад в развитие',
+    # Примечание: 'death' УБРАНО - оно блокирует медицинские посты
+    # про апоптоз, смерть клеток, смертность пациентов
     
-    # 🏗️ ИНФРАСТРУКТУРА (из предыдущих)
+    # 🏗️ ИНФРАСТРУКТУРА / СТРОИТЕЛЬСТВО
     'elevator', 'lift installation', 'building defect',
     'construction defect', 'hospital building',
     'construction project', 'infrastructure delay',
     'лифт', 'установка лифт', 'строительн дефект',
     'дефект здани', 'больничн корпус', 'строительн проект',
     
-    # 🏙️ УРБАНИСТИКА (из предыдущих)
+    # 🏙️ УРБАНИСТИКА
     'urban planning', 'urban development', 'city planning',
     'data centre', 'data center', 'smart city', 'metropolis',
     'infrastructure project', 'transport corridor',
@@ -339,7 +352,7 @@ NEGATIVE_KEYWORDS = [
     'northern metropolis', 'северная метрополия',
     'green data centre', 'logistics flow', 'логистическ поток',
     
-    # 💼 РИТЕЙЛ (из предыдущих)
+    # 💼 РИТЕЙЛ
     'retail network', 'store network', 'chain expansion',
     'opened stores', '200 stores', 'retail points',
     'pharmacy chain', 'store launch', 'business expansion',
@@ -349,7 +362,7 @@ NEGATIVE_KEYWORDS = [
     'pharmacy beauty zone', 'baropharm',
     'sales channel', 'канал сбыта', 'торговые точки',
     
-    # 🌍 ГЕОПОЛИТИКА (из предыдущих)
+    # 🌍 ГЕОПОЛИТИКА
     'geopolitics', 'diplomacy', 'diplomatic', 'foreign policy',
     'foreign minister', 'foreign affairs', 'bilateral relations',
     'global south', 'public diplomacy', 'summit',
@@ -363,7 +376,7 @@ NEGATIVE_KEYWORDS = [
     'телефонные переговоры',
     'развивающиеся страны', 'многосторонн',
     
-    # 💊 ФАРМА / ОНКОЛОГИЯ (из предыдущих)
+    # 💊 ФАРМА / ОНКОЛОГИЯ (общая, не дерматологическая)
     'series a', 'series b', 'funding round', 'venture capital',
     'pharmaceutical investment', 'drug development',
     'solid tumor', 'solid tumour', 'oncology drug',
@@ -376,7 +389,7 @@ NEGATIVE_KEYWORDS = [
     'pfizer', 'merck', 'oncology',
     'таргетн терап', 'онколог',
     
-    # 🚀 ВОЕННАЯ ТЕМАТИКА (из предыдущих)
+    # 🚀 ВОЕННАЯ ТЕМАТИКА
     'missile', 'rocket', 'weapon', 'military', 'defense', 'defence',
     'aerospace', 'army', 'navy', 'air force', 'armed forces',
     'artillery', 'tank', 'fighter jet', 'warship', 'submarine',
@@ -389,26 +402,26 @@ NEGATIVE_KEYWORDS = [
     'hanwha', 'chunmoo', 'chunmu', 'k2 tank', 'kf-21', 'k9 howitzer',
     'ханва', 'чунму',
     
-    # 🚬 Табак (из предыдущих)
+    # 🚬 Табак
     'cigarette', 'tobacco', 'smoking', 'vaping', 'e-cigarette',
     'сигарет', 'табак', 'курение', 'вейп',
     
-    # ⚡ Энергетика (из предыдущих)
+    # ⚡ Энергетика
     'power plant', 'energy equipment', 'nuclear', 'coal mine',
     'энергетическое оборудование', 'электростанция', 'атомная энергетика',
     
-    # 🔬 Физика (из предыдущих)
+    # 🔬 Физика
     'physics conference', 'optics conference', 'laser physics', 'quantum optics',
     'photonics research', 'spectroscopy', 'laser beam', 'optical fiber',
-    'конференция по физике', 'лазерная физика', 'квантовая оптика', 'фотоника',
+    'конференция по физике', 'лазерная физика', 'квантовая оптика',
     'оптике', 'оптика',
     
-    # 🏬 Ритейл прочий (из предыдущих)
+    # 🏬 Ритейл прочий
     'retail store opening', 'fashion store', 'flagship store opening',
     'music platform', 'entertainment company', 'k-pop', 'idol group',
     'открытие магазина', 'флагманский магазин', 'музыкальная платформа',
     
-    # 📚 Литература/культура (из предыдущих)
+    # 📚 Литература/культура
     'writers festival', 'literary festival', 'book festival', 'poetry reading',
     'novel launch', 'author event', 'literary award', 'book fair',
     'cultural festival', 'film festival', 'music festival', 'art exhibition',
@@ -416,91 +429,80 @@ NEGATIVE_KEYWORDS = [
     'литературный фестиваль', 'книжная ярмарка', 'поэтический вечер',
     'писатель', 'поэт', 'романист', 'прозаик', 'литературн',
     
-    # 🎬 Кино (из предыдущих)
+    # 🎬 Кино
     'cultural context', 'historical drama', 'joseon dynasty', 'dynasty era',
     'movie premiere', 'film director', 'tv series', 'web drama',
     'историческая драма', 'династия чосон', 'кинопремьера', 'сериал',
     'культурный контекст', 'эпоха чосон',
     
-    # 📈 Политика/экономика (из предыдущих)
+    # 📈 Политика/экономика
     'stock market', 'economic policy', 'trade war', 'inflation',
     'interest rate', 'currency exchange', 'gdp growth', 'stock exchange',
     'фондовый рынок', 'экономическая политика', 'торговая война', 'инфляция',
     
-    # 🎓 Образование (из предыдущих)
+    # 🎓 Образование
     'university ranking', 'school curriculum', 'student exam',
     'рейтинг университетов', 'школьная программа',
     
-    # 🚗 Транспорт (из предыдущих)
+    # 🚗 Транспорт
     'highway construction', 'railway project', 'airport expansion',
     'строительство дороги', 'железная дорога',
     
-    # 🦴 Ревматология (из предыдущих)
+    # 🦴 Ревматология
     'rheumatoid arthritis', 'rheumatoid', 'osteoarthritis', 'arthritis',
     'joint inflammation', 'autoimmune joint', 'synovial', 'synovitis',
     'ревматоидный артрит', 'ревматоид', 'остеоартр', 'артрит',
     'воспаление суставов', 'суставн', 'сустав', 'суставы', 'синов',
     'хрящевая ткань', 'хрящ',
     
-    # 🫀 Кардиология/неврология (из предыдущих)
+    # 🫀 Кардиология/неврология
     'cardiac', 'heart attack', 'cardiovascular disease', 'myocardial',
     'stroke', 'neurological disorder', 'alzheimer', 'parkinson',
     'инфаркт', 'инсульт', 'кардиолог', 'неврологич', 'болезнь альцгеймера',
     
-    # 🦠 Общая онкология (из предыдущих)
+    # 🦠 Общая онкология (рак кожи оставляем!)
     'lung cancer', 'breast cancer', 'prostate cancer', 'colon cancer',
     'leukemia', 'lymphoma', 'glioblastoma',
     'рак легких', 'рак груди', 'рак простаты', 'лейкемия', 'лимфома',
     
-    # 🧠 Системные болезни (из предыдущих)
+    # 🧠 Системные болезни
     'systemic lupus', 'crohn disease', 'ulcerative colitis', 'celiac',
     'fibromyalgia', 'системная красная волчанка', 'болезнь крона', 'целиакия',
     
-    # 🏥 Хирургия (из предыдущих)
+    # 🏥 Хирургия
     'organ transplant', 'liver transplant', 'kidney transplant',
     'heart surgery', 'bypass surgery',
     'пересадка органа', 'шунтирование',
     
-    # 👶 Педиатрия общая (из предыдущих)
+    # 👶 Педиатрия общая
     'childhood vaccination', 'pediatric nutrition', 'infant formula',
     'детские прививки', 'детское питание',
     
-    # 🧬 Генетика общая (из предыдущих)
+    # 🧬 Генетика общая
     'genome sequencing', 'gene editing', 'crispr study',
     'секвенирование генома',
 ]
 
 # ========== 🚫 НЕГАТИВНЫЕ ХЭШТЕГИ ==========
 NEGATIVE_HASHTAGS = [
-    # Политика/дипломатия
     '#геополитик', '#дипломат', '#международныеотношения', '#международные_отношения',
     '#внешняяполитика', '#внешняя_политика', '#госуправление', '#государственноеуправление',
     '#общественность', '#политика', '#стратегическоепланирование', '#пятилетнийплан',
-    # Авиация/транспорт
     '#авиация', '#рейтинги', '#авиакомпания', '#транспорт', '#общественныйтранспорт',
     '#правилаповедения', '#штрафы', '#расследование', '#параплан', '#крушение',
-    # Спорт
     '#спорт', '#спортивнаямедицина', '#азийскиеигры', '#азиада', '#олимпиада',
     '#пятиборье', '#физиология',
-    # Кибербезопасность
     '#кибербезопасность', '#финансы', '#технологии', '#мошенничество', '#статистика',
-    # Экономика
     '#экономика', '#недвижимость', '#рыноккапитала', '#инвестиции',
     '#управлениекапиталом', '#фондовыйрынок', '#гонконг_экономика',
-    # Археология
     '#археология', '#железныйвек', '#дунай', '#древность',
-    # Зоология/эпидемиология
     '#зоология', '#питание', '#эпидемиология', '#зоонозы', '#бешенство',
     '#общественноездоровье', '#шаньдун', '#чунцин',
-    # Искусство
     '#театр', '#премияибсена', '#драма', '#искусство',
-    # Физика
     '#фотоника', '#голография', '#прикладнаяоптика', '#физика',
     '#нанофармакология', '#аэрозоли',
-    # ЧС/туризм
     '#экстреннаяпомощь', '#безопасность', '#горы', '#поход',
     '#спасение', '#эвакуация',
-    # Оборона
     '#оборона', '#военн', '#армия', '#флот', '#ввс',
     '#южнаякорея_политик', '#hongkong_politics',
 ]
@@ -684,6 +686,9 @@ def get_news_from_rss(feed_url, max_items=10):
 
         news_list = []
         for entry in feed.entries[:max_items]:
+            # 🛡️ ИСПРАВЛЕНО: Защита от записей без title
+            if not hasattr(entry, 'title') or not entry.title:
+                continue
             raw = entry.get('summary', entry.get('description', ''))
             summary = clean_html(raw)
             summary = (summary[:1500] + '...') if len(summary) > 1500 else summary
@@ -1089,13 +1094,15 @@ def find_news_in_category(cat, memory, posted_links, posted_titles):
         print(f"   📡 [{cat.upper()}] источник #{idx+1}/{n}: {feed}")
         news = fetch_from_feed(feed)
 
-        # 🎯 Адаптивная задержка
+        # 🎯 ИСПРАВЛЕНО: Усиленные задержки для защиты от rate limit
         if any(prefix in feed for prefix in ['crossref:', 'pubmed:', 'semanticscholar:', 'europepmc:']):
-            time.sleep(2.0)
+            time.sleep(3.0)  # Было 2.0
         elif feed == 'medrxiv':
-            time.sleep(1.5)
+            time.sleep(2.0)  # Было 1.5
+        elif 'tg.i-c-a.su' in feed:
+            time.sleep(1.5)  # НОВОЕ: для TG-каналов
         else:
-            time.sleep(0.5)
+            time.sleep(0.8)  # Было 0.5
 
         for item in news:
             if item['link'] in posted_links:
