@@ -185,7 +185,8 @@
     "https://t.me/cosmetologich/1804",
     "https://www.healio.com/news/dermatology/20261009/climaterelated-skin-diseases-rising-in-low-middleincome-countries",
     "https://t.me/d_dermatology/3113",
-    "https://www.scmp.com/news/hong-kong/health-environment/article/3370498/hong-kong-hiker-dies-singaporean-teen-discharged-after-2-trail-emergencies?utm_source=rss_feed"
+    "https://www.scmp.com/news/hong-kong/health-environment/article/3370498/hong-kong-hiker-dies-singaporean-teen-discharged-after-2-trail-emergencies?utm_source=rss_feed",
+    "https://www.healio.com/news/dermatology/20261012/rethinking-dermatologys-access-crisis"
   ],
   "posted_titles": [
     "the common mistake that could make aging joints hurt more",
@@ -373,11 +374,12 @@
     "добрый день",
     "climate-related skin diseases rising in low-, middle-income countries",
     "[photo] периоральный дерматит - это воспалительное состояние кожи, которое чаще всего появляет [...]",
-    "hong kong hiker dies, singaporean teen discharged after 2 trail emergencies"
+    "hong kong hiker dies, singaporean teen discharged after 2 trail emergencies",
+    "rethinking dermatology’s access crisis"
   ],
-  "site_index": 0,
-  "tg_index": 2,
+  "site_index": 2,
+  "tg_index": 3,
   "last_source": "site",
   "science_index": 3,
-  "next_category": "tg"
+  "next_category": "science"
 }
