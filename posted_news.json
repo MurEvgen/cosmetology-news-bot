@@ -575,9 +575,9 @@
     "[video] #дерматоскопия",
     "[video] я нашла для вас подарок 🎁 на новый год 🤶🏼 🎅🏼 🎄"
   ],
-  "site_index": 0,
-  "tg_index": 1,
+  "site_index": 1,
+  "tg_index": 2,
   "last_source": "site",
-  "science_index": 1,
-  "next_category": "tg"
+  "science_index": 2,
+  "next_category": "site"
 }
