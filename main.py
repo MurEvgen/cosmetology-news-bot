@@ -196,9 +196,75 @@ WHITELIST_KEYWORDS = [
     '胶原蛋白', '透明质酸', '多肽', '视黄醇',
 ]
 
-# ========== ❌ НЕГАТИВНЫЙ СПИСОК (ИСПРАВЛЕННЫЙ) ==========
+# ========== ❌ НЕГАТИВНЫЙ СПИСОК (РАСШИРЕННЫЙ) ==========
 NEGATIVE_KEYWORDS = [
-    # ✈️ АВИАЦИЯ / ТРАНСПОРТ (ИСПРАВЛЕНО: убраны короткие слова)
+    # 🚔 КРИМИНАЛ / СУДЫ (НОВОЕ)
+    'murder', 'killing', 'criminal', 'arrest', 'police', 'court',
+    'trial', 'verdict', 'guilty', 'lawsuit', 'hit-and-run',
+    'acid attack', 'corrosive substance', 'assault', 'manslaughter',
+    'убийство', 'криминал', 'полиция', 'задержан', 'арест',
+    'суд', 'судебн', 'приговор', 'виновн', 'подсудим',
+    'дтп', 'погоня', 'наезд', 'нападение с кислотой',
+    'кислотное нападение', 'телесные повреждения',
+    'disciplinary hearing', 'medical council',
+    'дисциплинарное дело', 'вегетативное состояние',
+    
+    # 🦖 ПАЛЕОНТОЛОГИЯ (НОВОЕ)
+    'dinosaur', 'fossil', 'paleontology', 'palaeontology',
+    'prehistoric', 'amber', 'fossilized',
+    'динозавр', 'палеонтолог', 'окаменел', 'ископаем',
+    'доисторическ', 'янтарь',
+    
+    # 🍷 ВИНО / ТУРИЗМ / ВЫСТАВКИ (НОВОЕ)
+    'wine', 'winery', 'vinexpo', 'vineyard', 'liquor',
+    'tourism board', 'trade fair', 'travel expo',
+    'вино', 'винная', 'винный', 'винодел', 'винэкспо',
+    'туристическ выставка', 'ярмарка',
+    
+    # 👴 ПЕНСИИ / СОЦПОЛИТИКА (НОВОЕ)
+    'pension', 'retirement', 'social welfare', 'citizenship',
+    'dual citizen', 'social security', 'benefit recipients',
+    'пенсия', 'пенсионн', 'социальная политика',
+    'двойное гражданство', 'социальное обеспечение',
+    'гражданство',
+    
+    # 💰 ФИНАНСЫ / ИНВЕСТБАНКИ (УСИЛИТЬ)
+    'investment bank', 'asset manager', 'asset management firm',
+    'hedge fund', 'private bank', 'assets under management',
+    'инвестбанк', 'управляющая компания', 'активы под управлением',
+    'хедж-фонд', 'private banking', 'открыл офис для доступа',
+    
+    # 🏥 МЕДИЦИНСКАЯ ПОЛИТИКА США (НОВОЕ)
+    'medicare', 'medicaid', 'federal judge', 'cms rule',
+    'physician fee schedule', 'insurance billing',
+    'медикэр', 'медикейд', 'федеральный судья',
+    'страховая программа', 'тарифы medicare',
+    
+    # 💥 ВОЕННЫЕ ИНЦИДЕНТЫ (УСИЛИТЬ)
+    'explosion', 'dmz', 'demilitarized zone', 'border incident',
+    'взрыв', 'демилитаризованная зона', 'зона разграничения',
+    'пограничный инцидент',
+    
+    # 🏗️ СТРОИТЕЛЬСТВО / ТЕНДЕРЫ (УСИЛИТЬ)
+    'tender', 'collusion', 'cartel', 'bid rigging',
+    'building maintenance', 'construction sector',
+    'тендер', 'сговор', 'картель', 'строительный сектор',
+    'обслуживание зданий',
+    
+    # 📰 МЕДИА / ЖУРНАЛИСТИКА (НОВОЕ)
+    'media awards', 'press award', 'journalist', 'pulitzer',
+    'editorial prize', 'photographer award',
+    'медиапреми', 'журналист', 'премия для прессы',
+    'фоторепортаж', 'инфографик',
+    
+    # 🦴 ОРТОПЕДИЯ / КОСТИ (УСИЛИТЬ)
+    'bone tissue', 'bone regeneration', 'skeletal', 'orthopedic',
+    'cartilage', 'osteoarthritis study', 'joint replacement',
+    'костная ткань', 'костн', 'ортопед', 'скелет',
+    'эндопротез', 'замена сустава', 'osteoartrit',
+    'остеоартрит', 'остеоартроз',
+    
+    # ✈️ АВИАЦИЯ / ТРАНСПОРТ
     'airline', 'airlines', 'aviation', 'paraglider', 'aircraft accident',
     'commercial aircraft', 'flight crash', 'cabin crew', 'business class',
     'airline rating', 'skytrax', 'cathay pacific', 'singapore airlines',
@@ -231,7 +297,7 @@ NEGATIVE_KEYWORDS = [
     'состоятельны', 'управление капитал', 'рынок капитала',
     'shorea capital', 'colliers',
     
-    # 🐕 ЭПИДЕМИОЛОГИЯ / УКУСЫ (ИСПРАВЛЕНО)
+    # 🐕 ЭПИДЕМИОЛОГИЯ / УКУСЫ
     'dog bite', 'animal attack', 'rabies', 'zoonotic',
     'animal bites', 'cat attack', 'wildlife incident',
     'mass dog bite', 'multiple dog bite', 'pet attack',
@@ -240,7 +306,7 @@ NEGATIVE_KEYWORDS = [
     'эпидемиологический', 'эпидемиология',
     'кластеризация рисков',
     
-    # 🔬 ФИЗИКА / АЭРОЗОЛИ / ОПТИКА (НЕ КОСМЕТИЧЕСКАЯ)
+    # 🔬 ФИЗИКА / АЭРОЗОЛИ / ОПТИКА
     'aerosol droplet', 'glass transition', 'nanoparticle aerosol',
     'inhalation delivery', 'photonics', 'holography', 'applied optics',
     'raman spectrometer', 'additive manufacturing',
@@ -261,7 +327,7 @@ NEGATIVE_KEYWORDS = [
     'драматург', 'театр', 'нобелевская премия', 'премия ибсена',
     'сценическое', 'театральн',
     
-    # 🐻 ЗООЛОГИЯ (ИСПРАВЛЕНО: убрано короткое 'bear')
+    # 🐻 ЗООЛОГИЯ
     'brown bear', 'black bear', 'polar bear', 'wild mammals',
     'animal diet', 'wildlife nutrition', 'tree bark diet',
     'медвежь', 'дикий медвед', 'дикое животное', 'дикие млекопитающие',
@@ -281,7 +347,7 @@ NEGATIVE_KEYWORDS = [
     'гавана', 'куба', 'вашингтон', 'дипломатическое взаимодействие',
     'каналы связи', 'межгосударственн',
     
-    # 🥾 ГОРНЫЙ ТУРИЗМ / ЧС (ИСПРАВЛЕНО: убрано короткое 'rescue')
+    # 🥾 ГОРНЫЙ ТУРИЗМ / ЧС
     'hiker', 'mountain trail', 'mountain rescue', 'search and rescue',
     'emergency evacuation', 'hiking accident', 'trail incident',
     'mountain emergency', 'lion rock', 'sunset peak',
@@ -289,7 +355,7 @@ NEGATIVE_KEYWORDS = [
     'потерял сознание', 'экстренная эвакуация', 'туристическ',
     'горный поход',
     
-    # 🚇 ОБЩЕСТВЕННЫЙ ТРАНСПОРТ / ШТРАФЫ (ИСПРАВЛЕНО: убраны 'bus', 'fine')
+    # 🚇 ОБЩЕСТВЕННЫЙ ТРАНСПОРТ / ШТРАФЫ
     'public transport penalty', 'transit fine', 'passenger misconduct',
     'bus etiquette', 'transit rules', 'mrt rules',
     'общественный транспорт', 'пассажирск автобус', 'метрополитен',
@@ -327,14 +393,12 @@ NEGATIVE_KEYWORDS = [
     'старение населения', 'демографическ кризис',
     'потеря рабоч', 'рынок труда', 'безработиц',
     
-    # ⚰️ НЕКРОЛОГИ (ИСПРАВЛЕНО: убрано короткое 'death')
+    # ⚰️ НЕКРОЛОГИ
     'passed away', 'obituary', 'funeral', 'memorial service',
     'tribute', 'remembered',
     'скончался', 'умер', 'памяти',
     'некролог', 'похороны', 'прощание',
     'отдает дань памяти', 'вклад в развитие',
-    # Примечание: 'death' УБРАНО - оно блокирует медицинские посты
-    # про апоптоз, смерть клеток, смертность пациентов
     
     # 🏗️ ИНФРАСТРУКТУРА / СТРОИТЕЛЬСТВО
     'elevator', 'lift installation', 'building defect',
@@ -376,7 +440,7 @@ NEGATIVE_KEYWORDS = [
     'телефонные переговоры',
     'развивающиеся страны', 'многосторонн',
     
-    # 💊 ФАРМА / ОНКОЛОГИЯ (общая, не дерматологическая)
+    # 💊 ФАРМА / ОНКОЛОГИЯ
     'series a', 'series b', 'funding round', 'venture capital',
     'pharmaceutical investment', 'drug development',
     'solid tumor', 'solid tumour', 'oncology drug',
@@ -460,7 +524,7 @@ NEGATIVE_KEYWORDS = [
     'stroke', 'neurological disorder', 'alzheimer', 'parkinson',
     'инфаркт', 'инсульт', 'кардиолог', 'неврологич', 'болезнь альцгеймера',
     
-    # 🦠 Общая онкология (рак кожи оставляем!)
+    # 🦠 Общая онкология
     'lung cancer', 'breast cancer', 'prostate cancer', 'colon cancer',
     'leukemia', 'lymphoma', 'glioblastoma',
     'рак легких', 'рак груди', 'рак простаты', 'лейкемия', 'лимфома',
@@ -483,7 +547,7 @@ NEGATIVE_KEYWORDS = [
     'секвенирование генома',
 ]
 
-# ========== 🚫 НЕГАТИВНЫЕ ХЭШТЕГИ ==========
+# ========== 🚫 НЕГАТИВНЫЕ ХЭШТЕГИ (РАСШИРЕННЫЕ) ==========
 NEGATIVE_HASHTAGS = [
     '#геополитик', '#дипломат', '#международныеотношения', '#международные_отношения',
     '#внешняяполитика', '#внешняя_политика', '#госуправление', '#государственноеуправление',
@@ -505,6 +569,15 @@ NEGATIVE_HASHTAGS = [
     '#спасение', '#эвакуация',
     '#оборона', '#военн', '#армия', '#флот', '#ввс',
     '#южнаякорея_политик', '#hongkong_politics',
+    '#криминал', '#суд', '#убийство', '#дтп', '#погоня',
+    '#палеонтология', '#динозавр', '#окаменелости',
+    '#вино', '#виннаяиндустрия', '#vinexpo',
+    '#пенсия', '#социальнаяполитика', '#гражданство',
+    '#инвестбанк', '#активы', '#хеджфонд',
+    '#медикэр', '#медикейд', '#страхование',
+    '#строительство', '#тендер', '#картель',
+    '#медиа', '#журналистика', '#награды',
+    '#ортопедия', '#остеоартрит', '#суставы',
 ]
 
 # ========== КОНТЕКСТНЫЕ ПАРЫ ==========
@@ -686,7 +759,7 @@ def get_news_from_rss(feed_url, max_items=10):
 
         news_list = []
         for entry in feed.entries[:max_items]:
-            # 🛡️ ИСПРАВЛЕНО: Защита от записей без title
+            # 🛡️ Защита от записей без title
             if not hasattr(entry, 'title') or not entry.title:
                 continue
             raw = entry.get('summary', entry.get('description', ''))
@@ -1094,15 +1167,15 @@ def find_news_in_category(cat, memory, posted_links, posted_titles):
         print(f"   📡 [{cat.upper()}] источник #{idx+1}/{n}: {feed}")
         news = fetch_from_feed(feed)
 
-        # 🎯 ИСПРАВЛЕНО: Усиленные задержки для защиты от rate limit
+        # 🎯 Усиленные задержки для защиты от rate limit
         if any(prefix in feed for prefix in ['crossref:', 'pubmed:', 'semanticscholar:', 'europepmc:']):
-            time.sleep(3.0)  # Было 2.0
+            time.sleep(3.0)
         elif feed == 'medrxiv':
-            time.sleep(2.0)  # Было 1.5
+            time.sleep(2.0)
         elif 'tg.i-c-a.su' in feed:
-            time.sleep(1.5)  # НОВОЕ: для TG-каналов
+            time.sleep(1.5)
         else:
-            time.sleep(0.8)  # Было 0.5
+            time.sleep(0.8)
 
         for item in news:
             if item['link'] in posted_links:
