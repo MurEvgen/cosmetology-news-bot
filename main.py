@@ -198,71 +198,82 @@ WHITELIST_KEYWORDS = [
 
 # ========== ❌ НЕГАТИВНЫЙ СПИСОК (РАСШИРЕННЫЙ) ==========
 NEGATIVE_KEYWORDS = [
-    # 🚔 КРИМИНАЛ / СУДЫ (НОВОЕ)
-    'murder', 'killing', 'criminal', 'arrest', 'police', 'court',
-    'trial', 'verdict', 'guilty', 'lawsuit', 'hit-and-run',
+    # 🚔 КРИМИНАЛ / СУДЫ (НОВОЕ — 15.10, 25.10, 02.11)
+    'murder', 'killing', 'criminal', 'arrested', 'police arrest', 'court hearing',
+    'trial', 'verdict', 'guilty plea', 'pleads guilty', 'lawsuit', 'hit-and-run',
     'acid attack', 'corrosive substance', 'assault', 'manslaughter',
-    'убийство', 'криминал', 'полиция', 'задержан', 'арест',
-    'суд', 'судебн', 'приговор', 'виновн', 'подсудим',
+    'убийство', 'убийств', 'криминал', 'полиция задержала', 'арестован',
+    'судебн', 'приговор', 'виновн', 'подсудим', 'признал вину',
     'дтп', 'погоня', 'наезд', 'нападение с кислотой',
-    'кислотное нападение', 'телесные повреждения',
-    'disciplinary hearing', 'medical council',
-    'дисциплинарное дело', 'вегетативное состояние',
+    'кислотное нападение', 'телесные повреждения', 'коррозионн',
     
-    # 🦖 ПАЛЕОНТОЛОГИЯ (НОВОЕ)
+    # 🏛️ МЕДИЦИНСКОЕ ПРАВО / ДИСЦИПЛИНАРНЫЕ ДЕЛА (НОВОЕ — 21.10)
+    'disciplinary hearing', 'medical council', 'disciplinary proceeding',
+    'malpractice', 'professional misconduct', 'license revocation',
+    'дисциплинарное дело', 'дисциплинарн слушани', 'вегетативное состояние',
+    'медицинский совет', 'врачебная ошибка', 'лишение лицензии',
+    
+    # 🦖 ПАЛЕОНТОЛОГИЯ (НОВОЕ — 03.11)
     'dinosaur', 'fossil', 'paleontology', 'palaeontology',
-    'prehistoric', 'amber', 'fossilized',
+    'prehistoric', 'amber inclusion', 'fossilized', 'mesozoic',
     'динозавр', 'палеонтолог', 'окаменел', 'ископаем',
-    'доисторическ', 'янтарь',
+    'доисторическ', 'янтарь с насеком', 'мезозойск',
     
-    # 🍷 ВИНО / ТУРИЗМ / ВЫСТАВКИ (НОВОЕ)
-    'wine', 'winery', 'vinexpo', 'vineyard', 'liquor',
-    'tourism board', 'trade fair', 'travel expo',
+    # 🍷 ВИНО / ТУРИЗМ / ВЫСТАВКИ (НОВОЕ — 30.10)
+    'wine', 'winery', 'vinexpo', 'vineyard', 'liquor', 'spirits',
+    'sommelier', 'wine tasting', 'wine fair', 'wine industry',
     'вино', 'винная', 'винный', 'винодел', 'винэкспо',
-    'туристическ выставка', 'ярмарка',
+    'сомелье', 'дегустация вин', 'винная индустрия',
     
-    # 👴 ПЕНСИИ / СОЦПОЛИТИКА (НОВОЕ)
-    'pension', 'retirement', 'social welfare', 'citizenship',
-    'dual citizen', 'social security', 'benefit recipients',
-    'пенсия', 'пенсионн', 'социальная политика',
+    # 👴 ПЕНСИИ / СОЦПОЛИТИКА (НОВОЕ — 05.11)
+    'pension', 'pensioner', 'retirement', 'social welfare', 'citizenship',
+    'dual citizen', 'social security', 'benefit recipients', 'basic pension',
+    'пенсия', 'пенсионер', 'пенсионн', 'социальная политика',
     'двойное гражданство', 'социальное обеспечение',
-    'гражданство',
+    'гражданство', 'базовая пенсия',
     
-    # 💰 ФИНАНСЫ / ИНВЕСТБАНКИ (УСИЛИТЬ)
+    # 💰 ФИНАНСЫ / ИНВЕСТБАНКИ (НОВОЕ — 05.11, 02.10)
     'investment bank', 'asset manager', 'asset management firm',
     'hedge fund', 'private bank', 'assets under management',
+    'federated hermes', 'private equity',
     'инвестбанк', 'управляющая компания', 'активы под управлением',
-    'хедж-фонд', 'private banking', 'открыл офис для доступа',
+    'хедж-фонд', 'private banking', 'управление активами',
     
-    # 🏥 МЕДИЦИНСКАЯ ПОЛИТИКА США (НОВОЕ)
-    'medicare', 'medicaid', 'federal judge', 'cms rule',
-    'physician fee schedule', 'insurance billing',
-    'медикэр', 'медикейд', 'федеральный судья',
-    'страховая программа', 'тарифы medicare',
+    # 🏥 МЕДИЦИНСКАЯ ПОЛИТИКА США (НОВОЕ — 31.10)
+    'medicare', 'medicaid', 'cms rule', 'cms policy',
+    'physician fee schedule', 'insurance billing', 'medical frailty rule',
+    'медикэр', 'медикейд', 'страховая программа', 'тарифы medicare',
     
-    # 💥 ВОЕННЫЕ ИНЦИДЕНТЫ (УСИЛИТЬ)
+    # 💥 ВОЕННЫЕ ИНЦИДЕНТЫ (НОВОЕ — 30.10)
     'explosion', 'dmz', 'demilitarized zone', 'border incident',
     'взрыв', 'демилитаризованная зона', 'зона разграничения',
     'пограничный инцидент',
     
-    # 🏗️ СТРОИТЕЛЬСТВО / ТЕНДЕРЫ (УСИЛИТЬ)
-    'tender', 'collusion', 'cartel', 'bid rigging',
-    'building maintenance', 'construction sector',
-    'тендер', 'сговор', 'картель', 'строительный сектор',
-    'обслуживание зданий',
+    # 🏗️ СТРОИТЕЛЬСТВО / ТЕНДЕРЫ (НОВОЕ — 30.10)
+    'bid rigging', 'building maintenance', 'construction sector',
+    'building contractor', 'cartel agreement',
+    'тендерный сговор', 'картель', 'строительный сектор',
+    'обслуживание зданий', 'подрядчик',
     
-    # 📰 МЕДИА / ЖУРНАЛИСТИКА (НОВОЕ)
-    'media awards', 'press award', 'journalist', 'pulitzer',
-    'editorial prize', 'photographer award',
-    'медиапреми', 'журналист', 'премия для прессы',
-    'фоторепортаж', 'инфографик',
+    # 📰 МЕДИА / ЖУРНАЛИСТИКА (НОВОЕ — 27.10)
+    'media awards', 'press award', 'journalist award', 'pulitzer',
+    'editorial prize', 'photographer award', 'asian media awards',
+    'медиапреми', 'награды для прессы',
+    'фоторепортаж награ', 'журналистск преми',
     
-    # 🦴 ОРТОПЕДИЯ / КОСТИ (УСИЛИТЬ)
+    # 🦴 ОРТОПЕДИЯ / КОСТИ (НОВОЕ — 20.10)
     'bone tissue', 'bone regeneration', 'skeletal', 'orthopedic',
-    'cartilage', 'osteoarthritis study', 'joint replacement',
+    'orthopaedic', 'cartilage repair', 'osteoarthritis study',
+    'joint replacement', 'piezoelectric scaffold', 'bone implant',
     'костная ткань', 'костн', 'ортопед', 'скелет',
-    'эндопротез', 'замена сустава', 'osteoartrit',
-    'остеоартрит', 'остеоартроз',
+    'эндопротез', 'замена сустава', 'остеоартрит', 'остеоартроз',
+    'хрящевая ткань', 'пьезоэлектрическ каркас',
+    
+    # 🚔 ДОПОЛНИТЕЛЬНО: СКАНДАЛЫ / ЗНАМЕНИТОСТИ
+    'celebrity scandal', 'idol controversy', 'brand boycott',
+    'sexual crime', 'sex scandal',
+    'бойкот бренда', 'скандал со знаменитостью',
+    'сексуальное преступление',
     
     # ✈️ АВИАЦИЯ / ТРАНСПОРТ
     'airline', 'airlines', 'aviation', 'paraglider', 'aircraft accident',
@@ -281,10 +292,10 @@ NEGATIVE_KEYWORDS = [
     'спортсмен', 'золотая медаль', 'соревновани', 'команда завоевала',
     'чемпионат', 'спортивная федерация',
     
-    # 🚨 КИБЕРБЕЗОПАСНОСТЬ
+    # 🚨 КИБЕРБЕЗОПАСНОСТЬ (УСИЛЕНО)
     'cyberattack', 'cybersecurity', 'scam', 'fraud', 'phishing', 'hacker',
     'malicious software', 'malware', 'data breach', 'customer service scam',
-    'ip-address spoof', 'ip address spoof',
+    'ip-address spoof', 'ip address spoof', 'data leak',
     'кибератака', 'кибербезопасность', 'мошенничество', 'фишинг',
     'хакер', 'вредоносное приложение', 'сетевой трафик',
     'утечка данных', 'поддельная служба поддержки',
@@ -578,6 +589,7 @@ NEGATIVE_HASHTAGS = [
     '#строительство', '#тендер', '#картель',
     '#медиа', '#журналистика', '#награды',
     '#ортопедия', '#остеоартрит', '#суставы',
+    '#медицинскоеправо', '#дисциплинарноепроизводство',
 ]
 
 # ========== КОНТЕКСТНЫЕ ПАРЫ ==========
@@ -1016,7 +1028,16 @@ def get_news_from_europepmc(query, max_items=6):
             "sort": "FIRST_PDATE desc",
         }
         headers = {"User-Agent": f"CosmetologyNewsBot/1.0 (mailto:{CONTACT_EMAIL})"}
-        resp = requests.get(url, params=params, headers=headers, timeout=15)
+        
+        # 🛡️ Retry-логика для 503
+        for attempt in range(2):
+            resp = requests.get(url, params=params, headers=headers, timeout=15)
+            if resp.status_code == 503:
+                print(f"   ⚠️ Europe PMC статус 503, попытка {attempt+1}/2")
+                time.sleep(5)
+                continue
+            break
+        
         if resp.status_code != 200:
             print(f"   ⚠️ Europe PMC статус {resp.status_code}")
             return []
@@ -1168,7 +1189,9 @@ def find_news_in_category(cat, memory, posted_links, posted_titles):
         news = fetch_from_feed(feed)
 
         # 🎯 Усиленные задержки для защиты от rate limit
-        if any(prefix in feed for prefix in ['crossref:', 'pubmed:', 'semanticscholar:', 'europepmc:']):
+        if 'semanticscholar' in feed:
+            time.sleep(5.0)  # Увеличено для избежания 429
+        elif any(prefix in feed for prefix in ['crossref:', 'pubmed:', 'europepmc:']):
             time.sleep(3.0)
         elif feed == 'medrxiv':
             time.sleep(2.0)
