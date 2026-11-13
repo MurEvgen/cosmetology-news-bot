@@ -299,7 +299,8 @@
     "https://www.healio.com/news/dermatology/20261111/understanding-the-role-of-precision-nutrition-in-dermatologic-surgery",
     "https://www.healio.com/news/primary-care/20261111/qa-creating-evidencebased-lifestyle-medicine-interventions-for-patients",
     "https://t.me/d_dermatology/3293",
-    "https://www.healio.com/news/dermatology/20261110/claude-chatgpt-confidently-missed-skin-cancers-in-darker-skin"
+    "https://www.healio.com/news/dermatology/20261110/claude-chatgpt-confidently-missed-skin-cancers-in-darker-skin",
+    "https://doi.org/10.64898/2026.10.30.26366523"
   ],
   "posted_titles": [
     "the common mistake that could make aging joints hurt more",
@@ -601,11 +602,12 @@
     "understanding the role of precision nutrition in dermatologic surgery",
     "q&a: creating evidence-based lifestyle medicine interventions",
     "[photo] миф: «если средство аптечное — оно безопасно»",
-    "claude, chatgpt confidently missed skin cancers in darker skin"
+    "claude, chatgpt confidently missed skin cancers in darker skin",
+    "[препринт] post-icb lymphocyte stability following immune checkpoint blockade is coupled to mitochondrial haplotype and clinical outcome in advanced melanoma"
   ],
   "site_index": 2,
   "tg_index": 2,
   "last_source": "site",
   "science_index": 4,
-  "next_category": "science"
+  "next_category": "tg"
 }
