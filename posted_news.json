@@ -301,7 +301,8 @@
     "https://t.me/d_dermatology/3293",
     "https://www.healio.com/news/dermatology/20261110/claude-chatgpt-confidently-missed-skin-cancers-in-darker-skin",
     "https://doi.org/10.64898/2026.10.30.26366523",
-    "https://www.healio.com/news/dermatology/20261113/consider-hormone-therapy-to-improve-menopauserelated-skin-changes"
+    "https://www.healio.com/news/dermatology/20261113/consider-hormone-therapy-to-improve-menopauserelated-skin-changes",
+    "https://t.me/cosmetologiainside/2477"
   ],
   "posted_titles": [
     "the common mistake that could make aging joints hurt more",
@@ -605,11 +606,12 @@
     "[photo] миф: «если средство аптечное — оно безопасно»",
     "claude, chatgpt confidently missed skin cancers in darker skin",
     "[препринт] post-icb lymphocyte stability following immune checkpoint blockade is coupled to mitochondrial haplotype and clinical outcome in advanced melanoma",
-    "consider hormone therapy to improve menopause-related skin changes"
+    "consider hormone therapy to improve menopause-related skin changes",
+    "[photo] девочки привет ,подскажите заполнить межбровку чем можно из филлеров,клиентку раздраж [...]"
   ],
   "site_index": 2,
-  "tg_index": 3,
+  "tg_index": 0,
   "last_source": "site",
-  "science_index": 0,
-  "next_category": "science"
+  "science_index": 1,
+  "next_category": "tg"
 }
